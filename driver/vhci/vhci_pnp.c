@@ -617,16 +617,31 @@ complete_pending_read_irp(pusbip_vpdo_dev_t vpdo)
 {
 	KIRQL	oldirql;
 	PIRP	irp;
+	BOOLEAN cancellable;
 
 	KeAcquireSpinLock(&vpdo->lock_urbr, &oldirql);
 	irp = vpdo->pending_read_irp;
 	vpdo->pending_read_irp = NULL;
+	cancellable = vpdo->pending_read_irp_cancellable;
+	vpdo->pending_read_irp_cancellable = FALSE;
 	KeReleaseSpinLock(&vpdo->lock_urbr, oldirql);
 
+	
 	if (irp != NULL) {
-		irp->IoStatus.Status = STATUS_DEVICE_NOT_CONNECTED;
-		irp->IoStatus.Information = 0;
-		IoCompleteRequest(irp, IO_NO_INCREMENT);
+		// We got pending_read_irp before submit_urbr
+		if (cancellable) {
+			BOOLEAN valid_irp;
+			IoAcquireCancelSpinLock(&oldirql);
+			valid_irp = IoSetCancelRoutine(vpdo->pending_read_irp, NULL) != NULL;
+			IoReleaseCancelSpinLock(oldirql);
+			if (valid_irp) {
+				irp->IoStatus.Status = STATUS_DEVICE_NOT_CONNECTED;
+				irp->IoStatus.Information = 0;
+				IoCompleteRequest(irp, IO_NO_INCREMENT);
+			}
+		}
+
+		
 	}
 }
 
@@ -642,7 +657,6 @@ complete_pending_irp(pusbip_vpdo_dev_t vpdo)
 	while(!IsListEmpty(&vpdo->head_urbr)) {
 		struct urb_req	*urbr;
 		PIRP	irp;
-		KIRQL	oldirql2;
 
 		urbr = CONTAINING_RECORD(vpdo->head_urbr.Flink, struct urb_req, list_all);
 		RemoveEntryListInit(&urbr->list_all);

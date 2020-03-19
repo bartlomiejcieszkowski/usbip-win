@@ -232,14 +232,17 @@ submit_urbr(pusbip_vpdo_dev_t vpdo, struct urb_req *urbr)
 
 	BOOLEAN valid_irp;
 	IoAcquireCancelSpinLock(&oldirql_cancel);
-	valid_irp = IoSetCancelRoutine(read_irp, NULL) != NULL;
+	valid_irp = IoSetCancelRoutine(vpdo->pending_read_irp, NULL) != NULL;
 	IoReleaseCancelSpinLock(oldirql_cancel);
 	if (!valid_irp) {
 		DBGI(DBG_URB, "submit_urbr: read irp was cancelled\n");
 		status = STATUS_INVALID_PARAMETER;
+		vpdo->pending_read_irp = NULL;
+		vpdo->pending_read_irp_cancellable = FALSE;
 		KeReleaseSpinLock(&vpdo->lock_urbr, oldirql);
 		return status;
 	}
+	vpdo->pending_read_irp_cancellable = FALSE;
 
 	read_irp = vpdo->pending_read_irp;
 	vpdo->urbr_sent_partial = urbr;
