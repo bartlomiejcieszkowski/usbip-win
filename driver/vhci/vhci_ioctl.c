@@ -45,9 +45,15 @@ vhci_ioctl_abort_pipe(pusbip_vpdo_dev_t vpdo, USBD_PIPE_HANDLE hPipe)
 		if (urbr_local->irp) {
 			PIRP	irp = urbr_local->irp;
 
+			KIRQL oldirql_cancel;
+			IoAcquireCancelSpinLock(&oldirql_cancel);
 			IoSetCancelRoutine(irp, NULL);
-			irp->IoStatus.Status = STATUS_CANCELLED;
-			IoCompleteRequest(irp, IO_NO_INCREMENT);
+			IoReleaseCancelSpinLock(&oldirql_cancel);
+
+			if (irp->Cancel == FALSE) {
+				irp->IoStatus.Status = STATUS_CANCELLED;
+				IoCompleteRequest(irp, IO_NO_INCREMENT);
+			}
 		}
 		RemoveEntryListInit(&urbr_local->list_state);
 		RemoveEntryListInit(&urbr_local->list_all);

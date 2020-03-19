@@ -624,11 +624,16 @@ complete_pending_read_irp(pusbip_vpdo_dev_t vpdo)
 	KeReleaseSpinLock(&vpdo->lock_urbr, oldirql);
 
 	if (irp != NULL) {
-		irp->IoStatus.Status = STATUS_DEVICE_NOT_CONNECTED;
+		IoAcquireCancelSpinLock(&oldirql);
 		IoSetCancelRoutine(irp, NULL);
-		KeRaiseIrql(DISPATCH_LEVEL, &oldirql);
-		IoCompleteRequest(irp, IO_NO_INCREMENT);
-		KeLowerIrql(oldirql);
+		IoReleaseCancelSpinLock(&oldirql);
+
+		if (irp->Cancel == FALSE) {
+			irp->IoStatus.Status = STATUS_DEVICE_NOT_CONNECTED;
+			KeRaiseIrql(DISPATCH_LEVEL, &oldirql);
+			IoCompleteRequest(irp, IO_NO_INCREMENT);
+			KeLowerIrql(oldirql);
+		}
 	}
 }
 
