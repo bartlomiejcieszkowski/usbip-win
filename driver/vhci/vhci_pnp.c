@@ -738,6 +738,7 @@ vhci_get_ports_status(ioctl_usbip_vhci_get_ports_status *st, pusbip_vhub_dev_t v
 		vpdo = CONTAINING_RECORD (entry, usbip_vpdo_dev_t, Link);
 		if (vpdo->port > 127 || vpdo->port == 0) {
 			DBGE(DBG_PNP, "strange error");
+			continue;
 		}
 		if (st->u.max_used_port < (char)vpdo->port)
 			st->u.max_used_port = (char)vpdo->port;
