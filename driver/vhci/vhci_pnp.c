@@ -648,7 +648,7 @@ complete_pending_irp(pusbip_vpdo_dev_t vpdo)
 		RemoveEntryListInit(&urbr->list_all);
 		RemoveEntryListInit(&urbr->list_state);
 		/* FIMXE event */
-		KeReleaseSpinLock(&vpdo->head_urbr, oldirql);
+		KeReleaseSpinLock(&vpdo->lock_urbr, oldirql);
 
 		irp = urbr->irp;
 		free_urbr(urbr);

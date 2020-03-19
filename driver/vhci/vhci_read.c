@@ -743,7 +743,6 @@ on_pending_irp_read_cancelled(PDEVICE_OBJECT devobj, PIRP irp_read)
 	UNREFERENCED_PARAMETER(devobj);
 	DBGI(DBG_READ, "pending irp read cancelled %p", irp_read);
 
-	KIRQL	oldirql;
 	PIO_STACK_LOCATION	irpstack;
 	pusbip_vpdo_dev_t	vpdo;
 

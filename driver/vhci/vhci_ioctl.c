@@ -49,7 +49,7 @@ vhci_ioctl_abort_pipe(pusbip_vpdo_dev_t vpdo, USBD_PIPE_HANDLE hPipe)
 			KIRQL oldirql_cancel;
 			IoAcquireCancelSpinLock(&oldirql_cancel);
 			valid_irp = IoSetCancelRoutine(irp, NULL) != NULL;
-			IoReleaseCancelSpinLock(&oldirql_cancel);
+			IoReleaseCancelSpinLock(oldirql_cancel);
 
 			if (valid_irp) {
 				irp->IoStatus.Status = STATUS_CANCELLED;
