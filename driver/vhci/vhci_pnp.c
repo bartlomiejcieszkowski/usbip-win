@@ -640,56 +640,44 @@ complete_pending_read_irp(pusbip_vpdo_dev_t vpdo)
 static void
 complete_pending_irp(pusbip_vpdo_dev_t vpdo)
 {
-	int	count = 0;
 	KIRQL	oldirql;
 
-	//FIXME
 	DBGI(DBG_PNP, "finish pending irp\n");
-	KeRaiseIrql(DISPATCH_LEVEL, &oldirql);
-	do {
+	
+	KeAcquireSpinLock(&vpdo->lock_urbr, &oldirql);
+	while(!IsListEmpty(&vpdo->head_urbr)) {
 		struct urb_req	*urbr;
 		PIRP	irp;
 		KIRQL	oldirql2;
-
-		KeAcquireSpinLockAtDpcLevel(&vpdo->lock_urbr);
-		if (IsListEmpty(&vpdo->head_urbr)) {
-			vpdo->urbr_sent_partial = NULL;
-			vpdo->len_sent_partial = 0;
-			InitializeListHead(&vpdo->head_urbr_sent);
-			InitializeListHead(&vpdo->head_urbr_pending);
-
-			KeReleaseSpinLock(&vpdo->lock_urbr, oldirql);
-			break;
-		}
 
 		urbr = CONTAINING_RECORD(vpdo->head_urbr.Flink, struct urb_req, list_all);
 		RemoveEntryListInit(&urbr->list_all);
 		RemoveEntryListInit(&urbr->list_state);
 		/* FIMXE event */
+		KeReleaseSpinLock(&vpdo->head_urbr, oldirql);
+
 		irp = urbr->irp;
-
-		if (count > 2) {
-			LARGE_INTEGER	interval;
-
-			KeReleaseSpinLock(&vpdo->lock_urbr, oldirql);
-			DBGI(DBG_PNP, "sleep 50ms, let pnp manager send irp");
-			interval.QuadPart = -500000;
-			KeDelayExecutionThread(KernelMode, FALSE, &interval);
-			KeRaiseIrql(DISPATCH_LEVEL, &oldirql);
-		} else {
-			KeReleaseSpinLock(&vpdo->lock_urbr, DISPATCH_LEVEL);
-		}
-
 		free_urbr(urbr);
 		if (irp != NULL) {
-			irp->IoStatus.Status = STATUS_DEVICE_NOT_CONNECTED;
+			IoAcquireCancelSpinLock(&oldirql);
 			IoSetCancelRoutine(irp, NULL);
-			KeRaiseIrql(DISPATCH_LEVEL, &oldirql2);
-			IoCompleteRequest(irp, IO_NO_INCREMENT);
-			KeLowerIrql(oldirql2);
+			IoReleaseCancelSpinLock(oldirql);
+			if (irp->Cancel == FALSE) {
+				irp->IoStatus.Status = STATUS_DEVICE_NOT_CONNECTED;
+				irp->IoStatus.Information = 0;
+				IoCompleteRequest(irp, IO_NO_INCREMENT);
+			}
 		}
-		count++;
-	} while (1);
+
+		KeAcquireSpinLock(&vpdo->lock_urbr, &oldirql);
+	};
+	
+	vpdo->urbr_sent_partial = NULL; // sure?
+	vpdo->len_sent_partial = 0;
+	InitializeListHead(&vpdo->head_urbr_sent);
+	InitializeListHead(&vpdo->head_urbr_pending);
+
+	KeReleaseSpinLock(&vpdo->lock_urbr, oldirql);
 }
 
 PAGEABLE void
