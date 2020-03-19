@@ -62,6 +62,7 @@ vhci_driverUnload(__in PDRIVER_OBJECT drvobj)
 		ExFreePool(Globals.RegistryPath.Buffer);
 }
 
+_Dispatch_type_(IRP_MJ_CREATE)
 static PAGEABLE NTSTATUS
 vhci_create(__in PDEVICE_OBJECT devobj, __in PIRP Irp)
 {
@@ -96,6 +97,7 @@ vhci_create(__in PDEVICE_OBJECT devobj, __in PIRP Irp)
 	return STATUS_SUCCESS;
 }
 
+_Dispatch_type_(IRP_MJ_CLEANUP)
 static PAGEABLE NTSTATUS
 vhci_cleanup(__in PDEVICE_OBJECT devobj, __in PIRP irp)
 {
@@ -149,6 +151,7 @@ vhci_cleanup(__in PDEVICE_OBJECT devobj, __in PIRP irp)
 	return status;
 }
 
+_Dispatch_type_(IRP_MJ_CLOSE)
 static PAGEABLE NTSTATUS
 vhci_close(__in PDEVICE_OBJECT devobj, __in PIRP Irp)
 {
@@ -186,9 +189,12 @@ vhci_close(__in PDEVICE_OBJECT devobj, __in PIRP Irp)
 	return status;
 }
 
+DRIVER_INITIALIZE DriverEntry;
+
 PAGEABLE NTSTATUS
 DriverEntry(__in PDRIVER_OBJECT drvobj, __in PUNICODE_STRING RegistryPath)
 {
+	PAGED_CODE();
 	DBGI(DBG_GENERAL, "DriverEntry: Enter\n");
 
 	ExInitializeNPagedLookasideList(&g_lookaside, NULL,NULL, 0, sizeof(struct urb_req), 'USBV', 0);

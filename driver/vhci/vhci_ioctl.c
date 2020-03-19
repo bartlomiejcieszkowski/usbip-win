@@ -147,6 +147,8 @@ vhci_internal_ioctl(__in PDEVICE_OBJECT devobj, __in PIRP Irp)
 	pdev_common_t		devcom;
 	ULONG			ioctl_code;
 
+	PAGED_CODE();
+
 	devcom = (pdev_common_t)devobj->DeviceExtension;
 
 	DBGI(DBG_GENERAL | DBG_IOCTL, "vhci_internal_ioctl: Enter\n");
