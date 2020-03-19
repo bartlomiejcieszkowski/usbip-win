@@ -741,29 +741,20 @@ static VOID
 on_pending_irp_read_cancelled(PDEVICE_OBJECT devobj, PIRP irp_read)
 {
 	UNREFERENCED_PARAMETER(devobj);
-	DBGI(DBG_READ, "pending irp read cancelled");
+	DBGI(DBG_READ, "pending irp read cancelled %p", irp_read);
 
 	KIRQL	oldirql;
 	PIO_STACK_LOCATION	irpstack;
 	pusbip_vpdo_dev_t	vpdo;
 
+	IoReleaseCancelSpinLock(irp_read->CancelIrql);
+
 	irpstack = IoGetCurrentIrpStackLocation(irp_read);
 	vpdo = irpstack->FileObject->FsContext;
 
-	KeAcquireSpinLock(&vpdo->lock_urbr, &oldirql);
-	if (vpdo->pending_read_irp == irp_read) {
-		vpdo->pending_read_irp = NULL;
-		KeReleaseSpinLock(&vpdo->lock_urbr, oldirql);
-		IoReleaseCancelSpinLock(irp_read->CancelIrql);
-
-		irp_read->IoStatus.Status = STATUS_CANCELLED;
-		IoCompleteRequest(irp_read, IO_NO_INCREMENT);
-	}
-	else {
-		KeReleaseSpinLock(&vpdo->lock_urbr, oldirql);
-		IoReleaseCancelSpinLock(irp_read->CancelIrql);
-		DBGI(DBG_READ, "cancelled IRP already handled in other thread");
-	}
+	irp_read->IoStatus.Status = STATUS_CANCELLED;
+	irp_read->IoStatus.Information = 0;
+	IoCompleteRequest(irp_read, IO_NO_INCREMENT);
 }
 
 static NTSTATUS
@@ -792,9 +783,14 @@ process_read_irp(pusbip_vpdo_dev_t vpdo, PIRP read_irp)
 	else {
 		urbr = find_pending_urbr(vpdo);
 		if (urbr == NULL) {
-			IoSetCancelRoutine(read_irp, on_pending_irp_read_cancelled);
-			IoMarkIrpPending(read_irp);
 			vpdo->pending_read_irp = read_irp;
+
+			KIRQL oldirql_cancel;
+			IoAcquireCancelSpinLock(&oldirql_cancel);
+			IoSetCancelRoutine(read_irp, on_pending_irp_read_cancelled);
+			IoReleaseCancelSpinLock(oldirql_cancel);
+			IoMarkIrpPending(read_irp);
+
 			KeReleaseSpinLock(&vpdo->lock_urbr, oldirql);
 			return STATUS_PENDING;
 		}
