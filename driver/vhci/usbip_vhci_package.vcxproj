@@ -88,6 +88,7 @@
     <Inf2CatVerbose>true</Inf2CatVerbose>
     <Inf2CatUseLocalTime>true</Inf2CatUseLocalTime>
     <IntDir>$(SolutionDir)$(ConfigurationName)\$(Platform)\$(ProjectName)\</IntDir>
+    <EnableInf2cat>true</EnableInf2cat>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <DebuggerFlavor>DbgengKernelDebugger</DebuggerFlavor>
@@ -103,6 +104,7 @@
     <Inf2CatVerbose>true</Inf2CatVerbose>
     <Inf2CatUseLocalTime>true</Inf2CatUseLocalTime>
     <IntDir>$(SolutionDir)$(ConfigurationName)\$(Platform)\$(ProjectName)\</IntDir>
+    <EnableInf2cat>true</EnableInf2cat>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <DebuggerFlavor>DbgengKernelDebugger</DebuggerFlavor>
@@ -118,6 +120,8 @@
     <Inf2CatVerbose>true</Inf2CatVerbose>
     <Inf2CatUseLocalTime>true</Inf2CatUseLocalTime>
     <IntDir>$(SolutionDir)$(ConfigurationName)\$(Platform)\$(ProjectName)\</IntDir>
+    <PostBuildEventUseInBuild>true</PostBuildEventUseInBuild>
+    <EnableInf2cat>true</EnableInf2cat>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <DebuggerFlavor>DbgengKernelDebugger</DebuggerFlavor>
@@ -133,48 +137,69 @@
     <Inf2CatVerbose>true</Inf2CatVerbose>
     <Inf2CatUseLocalTime>true</Inf2CatUseLocalTime>
     <IntDir>$(SolutionDir)$(ConfigurationName)\$(Platform)\$(ProjectName)\</IntDir>
+    <EnableInf2cat>true</EnableInf2cat>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <PostBuildEvent>
-      <Command>xcopy $(IntDir)\usbip_vhci.cat $(OutDir) /Y</Command>
+      <Command>
+      </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <PostBuildEvent>
       <Message>copies cat to OutDir, inf2cat ignores OutDir</Message>
     </PostBuildEvent>
+    <DriverSign>
+      <FileDigestAlgorithm>sha256</FileDigestAlgorithm>
+    </DriverSign>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <PostBuildEvent>
-      <Command>xcopy $(IntDir)\usbip_vhci.cat $(OutDir) /Y</Command>
+      <Command>
+      </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <PostBuildEvent>
       <Message>copies cat to OutDir, inf2cat ignores OutDir</Message>
+    </PostBuildEvent>
+    <DriverSign>
+      <FileDigestAlgorithm>sha256</FileDigestAlgorithm>
+    </DriverSign>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <PostBuildEvent>
+      <Command>
+      </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <PostBuildEvent>
-      <Command>xcopy $(IntDir)\usbip_vhci.cat $(OutDir) /Y</Command>
-    </PostBuildEvent>
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <PostBuildEvent>
       <Message>copies cat to OutDir, inf2cat ignores OutDir</Message>
+    </PostBuildEvent>
+    <DriverSign>
+      <FileDigestAlgorithm>sha256</FileDigestAlgorithm>
+    </DriverSign>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <PostBuildEvent>
+      <Command>
+      </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <PostBuildEvent>
-      <Command>xcopy $(IntDir)\usbip_vhci.cat $(OutDir) /Y</Command>
-    </PostBuildEvent>
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <PostBuildEvent>
       <Message>copies cat to OutDir, inf2cat ignores OutDir</Message>
     </PostBuildEvent>
+    <DriverSign>
+      <FileDigestAlgorithm>sha256</FileDigestAlgorithm>
+    </DriverSign>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
+  <Target Name="MyAfterInfToCatTarget" AfterTargets="Inf2Cat">
+    <Message Text="Hello this is MyAfterInfToCatTarget trying to use signtool.." />
+      <Exec Command="xcopy &quot;$(IntDir)\usbip_vhci.cat&quot; &quot;$(OutDir)&quot; /Y" />
+    </Target>
 </Project>
