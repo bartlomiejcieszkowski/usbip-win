@@ -137,12 +137,13 @@ cancel_urbr(PDEVICE_OBJECT devobj, PIRP irp)
 
 	vpdo = (pusbip_vpdo_dev_t)devobj->DeviceExtension;
 	DBGI(DBG_GENERAL, "irp will be cancelled: %p\n", irp);
+	IoReleaseCancelSpinLock(irp->CancelIrql);
 
 	remove_cancelled_urbr(vpdo, irp);
 
 	irp->IoStatus.Status = STATUS_CANCELLED;
+	irp->IoStatus.Information = 0;
 	IoCompleteRequest(irp, IO_NO_INCREMENT);
-	IoReleaseCancelSpinLock(irp->CancelIrql);
 }
 
 struct urb_req *
