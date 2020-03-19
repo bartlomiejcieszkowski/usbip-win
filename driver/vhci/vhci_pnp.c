@@ -624,16 +624,9 @@ complete_pending_read_irp(pusbip_vpdo_dev_t vpdo)
 	KeReleaseSpinLock(&vpdo->lock_urbr, oldirql);
 
 	if (irp != NULL) {
-		IoAcquireCancelSpinLock(&oldirql);
-		IoSetCancelRoutine(irp, NULL);
-		IoReleaseCancelSpinLock(&oldirql);
-
-		if (irp->Cancel == FALSE) {
-			irp->IoStatus.Status = STATUS_DEVICE_NOT_CONNECTED;
-			KeRaiseIrql(DISPATCH_LEVEL, &oldirql);
-			IoCompleteRequest(irp, IO_NO_INCREMENT);
-			KeLowerIrql(oldirql);
-		}
+		irp->IoStatus.Status = STATUS_DEVICE_NOT_CONNECTED;
+		irp->IoStatus.Information = 0;
+		IoCompleteRequest(irp, IO_NO_INCREMENT);
 	}
 }
 
@@ -641,6 +634,7 @@ static void
 complete_pending_irp(pusbip_vpdo_dev_t vpdo)
 {
 	KIRQL	oldirql;
+	BOOLEAN	valid_irp;
 
 	DBGI(DBG_PNP, "finish pending irp\n");
 	
@@ -659,10 +653,11 @@ complete_pending_irp(pusbip_vpdo_dev_t vpdo)
 		irp = urbr->irp;
 		free_urbr(urbr);
 		if (irp != NULL) {
+			// urbr irps have cancel routine
 			IoAcquireCancelSpinLock(&oldirql);
-			IoSetCancelRoutine(irp, NULL);
+			valid_irp = IoSetCancelRoutine(irp, NULL) != NULL;
 			IoReleaseCancelSpinLock(oldirql);
-			if (irp->Cancel == FALSE) {
+			if (valid_irp) {
 				irp->IoStatus.Status = STATUS_DEVICE_NOT_CONNECTED;
 				irp->IoStatus.Information = 0;
 				IoCompleteRequest(irp, IO_NO_INCREMENT);

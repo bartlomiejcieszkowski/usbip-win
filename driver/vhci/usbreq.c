@@ -209,6 +209,7 @@ NTSTATUS
 submit_urbr(pusbip_vpdo_dev_t vpdo, struct urb_req *urbr)
 {
 	KIRQL	oldirql;
+	KIRQL	oldirql_cancel;
 	PIRP	read_irp;
 	NTSTATUS	status = STATUS_PENDING;
 
@@ -216,7 +217,9 @@ submit_urbr(pusbip_vpdo_dev_t vpdo, struct urb_req *urbr)
 
 	if (vpdo->urbr_sent_partial || vpdo->pending_read_irp == NULL) {
 		if (urbr->irp != NULL) {
+			IoAcquireCancelSpinLock(&oldirql_cancel);
 			IoSetCancelRoutine(urbr->irp, cancel_urbr);
+			IoReleaseCancelSpinLock(oldirql_cancel);
 			IoMarkIrpPending(urbr->irp);
 		}
 		InsertTailList(&vpdo->head_urbr_pending, &urbr->list_state);
@@ -240,7 +243,9 @@ submit_urbr(pusbip_vpdo_dev_t vpdo, struct urb_req *urbr)
 
 	if (status == STATUS_SUCCESS) {
 		if (urbr->irp != NULL) {
+			IoAcquireCancelSpinLock(&oldirql_cancel);
 			IoSetCancelRoutine(urbr->irp, cancel_urbr);
+			IoReleaseCancelSpinLock(oldirql_cancel);
 			IoMarkIrpPending(urbr->irp);
 		}
 		if (vpdo->len_sent_partial == 0) {

@@ -715,12 +715,21 @@ process_read_irp(pusbip_vpdo_dev_t vpdo, PIRP read_irp)
 		RemoveEntryListInit(&urbr->list_all);
 		KeReleaseSpinLock(&vpdo->lock_urbr, oldirql);
 
-		if (urbr->irp != NULL) {
-			IoSetCancelRoutine(urbr->irp, NULL);
-			urbr->irp->IoStatus.Status = STATUS_INVALID_PARAMETER;
-			IoCompleteRequest(urbr->irp, IO_NO_INCREMENT);
-		}
+		PIRP irp = urbr->irp;
 		free_urbr(urbr);
+
+		if (irp != NULL) {
+			// urbr irp has cancel routine, if the IoSetCancelRoutine returns NULL that means IRP was cancelled
+			BOOLEAN valid;
+			IoAcquireCancelSpinLock(&oldirql);
+			valid = IoSetCancelRoutine(irp, NULL) != NULL;
+			IoReleaseCancelSpinLock(oldirql);
+			if (valid) {
+				irp->IoStatus.Status = STATUS_INVALID_PARAMETER;
+				irp->IoStatus.Information = 0;
+				IoCompleteRequest(irp, IO_NO_INCREMENT);
+			}
+		}
 	}
 	else {
 		if (vpdo->len_sent_partial == 0) {
