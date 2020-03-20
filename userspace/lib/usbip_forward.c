@@ -6,6 +6,8 @@
 #include "usbip_proto.h"
 #include "usbip_network.h"
 
+#define DEBUG_PDU
+
 #define BUFREAD_P(devbuf)	((devbuf)->offp - (devbuf)->offhdr)
 #define BUFREADMAX_P(devbuf)	((devbuf)->bufmaxp - (devbuf)->offp)
 #define BUFREMAIN_C(devbuf)	((devbuf)->bufmaxc - (devbuf)->offc)
