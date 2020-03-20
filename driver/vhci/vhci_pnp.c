@@ -640,8 +640,6 @@ complete_pending_read_irp(pusbip_vpdo_dev_t vpdo)
 				IoCompleteRequest(irp, IO_NO_INCREMENT);
 			}
 		}
-
-		
 	}
 }
 
