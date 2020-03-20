@@ -195,7 +195,7 @@ PAGEABLE NTSTATUS
 DriverEntry(__in PDRIVER_OBJECT drvobj, __in PUNICODE_STRING RegistryPath)
 {
 	PAGED_CODE();
-	DBGI(DBG_GENERAL, "DriverEntry: Enter\n");
+	DBGI(DBG_GENERAL, "DriverEntry: Enter\n"); // LOG BUILD TIME AND VERSION
 
 	ExInitializeNPagedLookasideList(&g_lookaside, NULL,NULL, 0, sizeof(struct urb_req), 'USBV', 0);
 

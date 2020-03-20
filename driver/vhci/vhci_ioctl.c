@@ -198,7 +198,6 @@ vhci_internal_ioctl(__in PDEVICE_OBJECT devobj, __in PIRP Irp)
 	}
 
 	if (status != STATUS_PENDING) {
-		Irp->IoStatus.Information = 0;
 		Irp->IoStatus.Status = status;
 		IoCompleteRequest(Irp, IO_NO_INCREMENT);
 	}
@@ -229,6 +228,7 @@ vhci_ioctl(__in PDEVICE_OBJECT devobj, __in PIRP Irp)
 	if (!devcom->is_vhub) {
 		DBGE(DBG_IOCTL, "ioctl for vhub is not allowed\n");
 
+		Irp->IoStatus.Information = 0;
 		Irp->IoStatus.Status = status = STATUS_INVALID_DEVICE_REQUEST;
 		IoCompleteRequest(Irp, IO_NO_INCREMENT);
 		return status;

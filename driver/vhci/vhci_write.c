@@ -361,7 +361,6 @@ process_write_irp(pusbip_vpdo_dev_t vpdo, PIRP write_irp)
 		IoReleaseCancelSpinLock(oldirql);
 		if (valid_irp) {
 			irp->IoStatus.Status = status;
-			irp->IoStatus.Information = 0;
 
 			/* it seems windows client usb driver will think
 			 * IoCompleteRequest is running at DISPATCH_LEVEL
@@ -399,6 +398,7 @@ vhci_write(__in PDEVICE_OBJECT devobj, __in PIRP Irp)
 		DBGE(DBG_WRITE, "write for vhub is not allowed\n");
 
 		Irp->IoStatus.Status = STATUS_INVALID_DEVICE_REQUEST;
+		Irp->IoStatus.Information = 0;
 		IoCompleteRequest(Irp, IO_NO_INCREMENT);
 		return STATUS_INVALID_DEVICE_REQUEST;
 	}
