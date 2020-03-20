@@ -154,7 +154,7 @@ vhci_internal_ioctl(__in PDEVICE_OBJECT devobj, __in PIRP Irp)
 
 	devcom = (pdev_common_t)devobj->DeviceExtension;
 
-	DBGI(DBG_GENERAL | DBG_IOCTL, "vhci_internal_ioctl: Enter\n");
+	DBGI(DBG_GENERAL | DBG_IOCTL, "vhci_internal_ioctl: Enter %p\n", Irp);
 
 	irpStack = IoGetCurrentIrpStackLocation(Irp);
 	ioctl_code = irpStack->Parameters.DeviceIoControl.IoControlCode;
