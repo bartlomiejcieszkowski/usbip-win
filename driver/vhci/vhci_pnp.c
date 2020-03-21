@@ -632,7 +632,7 @@ complete_pending_read_irp(pusbip_vpdo_dev_t vpdo)
 		if (cancellable) {
 			BOOLEAN valid_irp;
 			IoAcquireCancelSpinLock(&oldirql);
-			valid_irp = IoSetCancelRoutine(vpdo->pending_read_irp, NULL) != NULL;
+			valid_irp = IoSetCancelRoutine(irp, NULL) != NULL;
 			IoReleaseCancelSpinLock(oldirql);
 			if (valid_irp) {
 				irp->IoStatus.Status = STATUS_DEVICE_NOT_CONNECTED;
