@@ -152,6 +152,9 @@
     <DriverSign>
       <FileDigestAlgorithm>sha256</FileDigestAlgorithm>
     </DriverSign>
+    <PreBuildEvent>
+      <Command>DEL /F /Q $(IntDir)\*</Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <PostBuildEvent>
@@ -166,6 +169,9 @@
     <DriverSign>
       <FileDigestAlgorithm>sha256</FileDigestAlgorithm>
     </DriverSign>
+    <PreBuildEvent>
+      <Command>DEL /F /Q $(IntDir)\*</Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <PostBuildEvent>
@@ -180,6 +186,9 @@
     <DriverSign>
       <FileDigestAlgorithm>sha256</FileDigestAlgorithm>
     </DriverSign>
+    <PreBuildEvent>
+      <Command>DEL /F /Q $(IntDir)\*</Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <PostBuildEvent>
@@ -194,12 +203,14 @@
     <DriverSign>
       <FileDigestAlgorithm>sha256</FileDigestAlgorithm>
     </DriverSign>
+    <PreBuildEvent>
+      <Command>DEL /F /Q $(IntDir)\*</Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
-  <Target Name="MyAfterInfToCatTarget" AfterTargets="Inf2Cat">
-    <Message Text="Hello this is MyAfterInfToCatTarget trying to use signtool.." />
-      <Exec Command="xcopy &quot;$(IntDir)\usbip_vhci.cat&quot; &quot;$(OutDir)&quot; /Y" />
-    </Target>
+  <Target Name="CopyAfterInf2Cat" AfterTargets="Inf2Cat">
+    <Exec Command="xcopy &quot;$(IntDir)\usbip_vhci.cat&quot; &quot;$(OutDir)&quot; /Y" />
+  </Target>
 </Project>
