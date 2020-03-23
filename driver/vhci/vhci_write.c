@@ -367,9 +367,7 @@ process_write_irp(pusbip_vpdo_dev_t vpdo, PIRP write_irp)
 			 * so without this it will change IRQL sometimes,
 			 * and introduce to a dead of my userspace program
 			 */
-			 // call to vhci_internal_ioctl with raised IRQL
-			 // IoCompleteRequest is forbidden at DISPATCH
-			 //KeRaiseIrql(DISPATCH_LEVEL, &oldirql);
+			//KeRaiseIrql(DISPATCH_LEVEL, &oldirql);
 			IoCompleteRequest(irp, IO_NO_INCREMENT);
 			//KeLowerIrql(oldirql);
 		}
@@ -388,6 +386,7 @@ vhci_write(__in PDEVICE_OBJECT devobj, __in PIRP Irp)
 	PIO_STACK_LOCATION	stackirp;
 	NTSTATUS		status;
 
+	LOG_IRQL_NE(PASSIVE_LEVEL);
 	PAGED_CODE();
 
 	devcom = (pdev_common_t)devobj->DeviceExtension;

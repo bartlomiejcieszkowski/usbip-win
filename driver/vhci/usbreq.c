@@ -104,8 +104,8 @@ static void
 remove_cancelled_urbr(pusbip_vpdo_dev_t vpdo, PIRP irp)
 {
 	struct urb_req	*urbr;
-
-	KeAcquireSpinLockAtDpcLevel(&vpdo->lock_urbr);
+	KIRQL oldirql;
+	KeAcquireSpinLock(&vpdo->lock_urbr, &oldirql);
 
 	urbr = find_urbr_with_irp(vpdo, irp);
 	if (urbr != NULL) {
@@ -120,7 +120,7 @@ remove_cancelled_urbr(pusbip_vpdo_dev_t vpdo, PIRP irp)
 		DBGW(DBG_URB, "no matching urbr");
 	}
 
-	KeReleaseSpinLockFromDpcLevel(&vpdo->lock_urbr);
+	KeReleaseSpinLock(&vpdo->lock_urbr, oldirql);
 
 	if (urbr != NULL) {
 		submit_urbr_unlink(vpdo, urbr->seq_num);

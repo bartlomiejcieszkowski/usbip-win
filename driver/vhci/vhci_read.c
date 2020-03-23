@@ -789,9 +789,9 @@ process_read_irp(pusbip_vpdo_dev_t vpdo, PIRP read_irp)
 			IoAcquireCancelSpinLock(&oldirql_cancel);
 			IoSetCancelRoutine(read_irp, on_pending_irp_read_cancelled);
 			IoReleaseCancelSpinLock(oldirql_cancel);
+			KeReleaseSpinLock(&vpdo->lock_urbr, oldirql);
 			IoMarkIrpPending(read_irp);
 
-			KeReleaseSpinLock(&vpdo->lock_urbr, oldirql);
 			return STATUS_PENDING;
 		}
 		vpdo->urbr_sent_partial = urbr;
@@ -841,6 +841,7 @@ vhci_read(__in PDEVICE_OBJECT devobj, __in PIRP irp)
 	PIO_STACK_LOCATION	irpstack;
 	NTSTATUS		status;
 
+	LOG_IRQL_NE(PASSIVE_LEVEL);
 	PAGED_CODE();
 
 	devcom = (pdev_common_t)devobj->DeviceExtension;
