@@ -398,7 +398,6 @@ vhci_write(__in PDEVICE_OBJECT devobj, __in PIRP Irp)
 		DBGE(DBG_WRITE, "write for vhub is not allowed\n");
 
 		Irp->IoStatus.Status = STATUS_INVALID_DEVICE_REQUEST;
-		Irp->IoStatus.Information = 0;
 		IoCompleteRequest(Irp, IO_NO_INCREMENT);
 		return STATUS_INVALID_DEVICE_REQUEST;
 	}
@@ -422,7 +421,6 @@ vhci_write(__in PDEVICE_OBJECT devobj, __in PIRP Irp)
 END:
 	DBGI(DBG_WRITE, "vhci_write: Leave: %s\n", dbg_ntstatus(status));
 	Irp->IoStatus.Status = status;
-	Irp->IoStatus.Information = 0;
 	IoCompleteRequest(Irp, IO_NO_INCREMENT);
 	dec_io_vhub(vhub);
 

@@ -198,6 +198,7 @@ vhci_internal_ioctl(__in PDEVICE_OBJECT devobj, __in PIRP Irp)
 	}
 
 	if (status != STATUS_PENDING) {
+		Irp->IoStatus.Information = 0;
 		Irp->IoStatus.Status = status;
 		IoCompleteRequest(Irp, IO_NO_INCREMENT);
 	}
