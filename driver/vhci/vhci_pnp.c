@@ -577,6 +577,7 @@ vhci_pnp(__in PDEVICE_OBJECT devobj, __in PIRP Irp)
 	PIO_STACK_LOCATION	irpStack;
 	NTSTATUS	status;
 
+	LOG_IRQL_NE(PASSIVE_LEVEL);
 	PAGED_CODE();
 
 	DBGI(DBG_GENERAL | DBG_PNP, "vhci_pnp: Enter");

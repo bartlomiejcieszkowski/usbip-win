@@ -141,7 +141,7 @@ setup_topology_address(pusbip_vpdo_dev_t vpdo, PIO_STACK_LOCATION irpStack)
 	return STATUS_SUCCESS;
 }
 
-PAGEABLE NTSTATUS
+NTSTATUS
 vhci_internal_ioctl(__in PDEVICE_OBJECT devobj, __in PIRP Irp)
 {
 	PIO_STACK_LOCATION      irpStack;
@@ -150,7 +150,7 @@ vhci_internal_ioctl(__in PDEVICE_OBJECT devobj, __in PIRP Irp)
 	pdev_common_t		devcom;
 	ULONG			ioctl_code;
 
-	PAGED_CODE();
+	LOG_IRQL_NE(PASSIVE_LEVEL);
 
 	devcom = (pdev_common_t)devobj->DeviceExtension;
 
@@ -219,6 +219,7 @@ vhci_ioctl(__in PDEVICE_OBJECT devobj, __in PIRP Irp)
 	PVOID				buffer;
 	ULONG				ioctl_code;
 
+	LOG_IRQL_NE(PASSIVE_LEVEL);
 	PAGED_CODE();
 
 	devcom = (pdev_common_t)devobj->DeviceExtension;

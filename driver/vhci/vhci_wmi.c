@@ -36,6 +36,7 @@ vhci_system_control(__in  PDEVICE_OBJECT devobj, __in PIRP Irp)
 	PIO_STACK_LOCATION	stack;
 	NTSTATUS		status;
 
+	LOG_IRQL_NE(PASSIVE_LEVEL);
 	PAGED_CODE();
 
 	DBGI(DBG_WMI, "vhci_system_control: Enter");
