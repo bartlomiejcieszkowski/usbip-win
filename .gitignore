@@ -4,3 +4,8 @@
 /Debug
 /Release
 /driver/vhci/sdv
+/driver/vhci/runsdvui.cmd
+/driver/vhci/SDV-default.xml
+/driver/vhci/sdv-user.sdv
+/driver/vhci/smvbuild.log
+/driver/vhci/smvstats.txt
