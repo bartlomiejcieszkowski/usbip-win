@@ -27,7 +27,7 @@ vhci_power_vhub(pusbip_vhub_dev_t vhub, PIRP Irp)
 	}
 
 	if (stack->MinorFunction == IRP_MN_SET_POWER) {
-		DBGI(DBG_POWER, "\tRequest to set %s state to %s\n",
+		DBGI(DBG_POWER, "\tRequest to set %s state to %s",
 			((powerType == SystemPowerState) ? "System" : "Device"),
 			((powerType == SystemPowerState) ? \
 				dbg_system_power(powerState.SystemState) : \
@@ -55,7 +55,7 @@ vhci_power_vpdo(pusbip_vpdo_dev_t vpdo, PIRP Irp)
 
 	switch (stack->MinorFunction) {
 	case IRP_MN_SET_POWER:
-		DBGI(DBG_POWER, "\tSetting %s power state to %s\n",
+		DBGI(DBG_POWER, "\tSetting %s power state to %s",
 			((powerType == SystemPowerState) ? "System" : "Device"),
 			((powerType == SystemPowerState) ? \
 				dbg_system_power(powerState.SystemState) : \
@@ -122,7 +122,8 @@ vhci_power(__in PDEVICE_OBJECT devobj, __in PIRP Irp)
 	PIO_STACK_LOCATION	irpStack;
 	NTSTATUS		status;
 
-	DBGI(DBG_GENERAL | DBG_POWER, "vhci_power: Enter\n");
+	DBGI(DBG_GENERAL | DBG_POWER, "vhci_power: Enter");
+	LOG_IRQL_NE(PASSIVE_LEVEL);
 
 	status = STATUS_SUCCESS;
 	irpStack = IoGetCurrentIrpStackLocation (Irp);
@@ -140,14 +141,14 @@ vhci_power(__in PDEVICE_OBJECT devobj, __in PIRP Irp)
 	}
 
 	if (devcom->is_vhub) {
-		DBGI(DBG_POWER, "vhub: minor: %s IRP:0x%p %s %s\n",
+		DBGI(DBG_POWER, "vhub: minor: %s IRP:0x%p %s %s",
 		     dbg_power_minor(irpStack->MinorFunction), Irp,
 		     dbg_system_power(devcom->SystemPowerState),
 		     dbg_device_power(devcom->DevicePowerState));
 
 		status = vhci_power_vhub((pusbip_vhub_dev_t)devobj->DeviceExtension, Irp);
 	} else {
-		DBGI(DBG_POWER, "vpdo: minor: %s IRP:0x%p %s %s\n",
+		DBGI(DBG_POWER, "vpdo: minor: %s IRP:0x%p %s %s",
 			 dbg_power_minor(irpStack->MinorFunction), Irp,
 			 dbg_system_power(devcom->SystemPowerState),
 			 dbg_device_power(devcom->DevicePowerState));

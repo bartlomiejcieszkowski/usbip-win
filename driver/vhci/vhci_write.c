@@ -14,7 +14,7 @@ save_iso_desc(struct _URB_ISOCH_TRANSFER *urb, struct usbip_iso_packet_descripto
 
 	for (i = 0; i < urb->NumberOfPackets; i++) {
 		if (iso_desc->offset > urb->IsoPacket[i].Offset) {
-			DBGW(DBG_WRITE, "why offset changed?%d %d %d %d\n",
+			DBGW(DBG_WRITE, "why offset changed?%d %d %d %d",
 			     i, iso_desc->offset, iso_desc->actual_length, urb->IsoPacket[i].Offset);
 			return FALSE;
 		}
@@ -32,7 +32,7 @@ get_buf(PVOID buf, PMDL bufMDL)
 		if (bufMDL != NULL)
 			buf = MmGetSystemAddressForMdlSafe(bufMDL, NormalPagePriority);
 		if (buf == NULL) {
-			DBGW(DBG_WRITE, "No transfer buffer\n");
+			DBGW(DBG_WRITE, "No transfer buffer");
 		}
 	}
 	return buf;
@@ -73,14 +73,14 @@ post_select_config(pusbip_vpdo_dev_t vpdo, PURB urb)
 
 	// If ConfigurationDescriptor is NULL, the device will be set to an unconfigured state.
 	if (urb_selc->ConfigurationDescriptor == NULL) {
-		DBGE(DBG_WRITE, "post_select_config: unconfigured state\n");
+		DBGE(DBG_WRITE, "post_select_config: unconfigured state");
 		return STATUS_SUCCESS;
 	}
 
 	len = urb_selc->ConfigurationDescriptor->wTotalLength;
 	dsc_conf = ExAllocatePoolWithTag(NonPagedPool, len, USBIP_VHCI_POOL_TAG);
 	if (dsc_conf == NULL) {
-		DBGE(DBG_WRITE, "post_select_config: out of memory\n");
+		DBGE(DBG_WRITE, "post_select_config: out of memory");
 		return STATUS_UNSUCCESSFUL;
 	}
 
@@ -98,7 +98,7 @@ post_select_interface(pusbip_vpdo_dev_t vpdo, PURB urb)
 	struct _URB_SELECT_INTERFACE	*urb_seli = &urb->UrbSelectInterface;
 
 	if (vpdo->dsc_conf == NULL) {
-		DBGW(DBG_WRITE, "post_select_interface: empty configuration descriptor\n");
+		DBGW(DBG_WRITE, "post_select_interface: empty configuration descriptor");
 		return STATUS_INVALID_DEVICE_REQUEST;
 	}
 
@@ -111,7 +111,7 @@ copy_to_transfer_buffer(PVOID buf_dst, PMDL bufMDL, int dst_len, PVOID src, int 
 	PVOID	buf;
 
 	if (dst_len < src_len) {
-		DBGE(DBG_WRITE, "too small buffer: dest: %d, src: %d\n", dst_len, src_len);
+		DBGE(DBG_WRITE, "too small buffer: dest: %d, src: %d", dst_len, src_len);
 		return STATUS_INVALID_PARAMETER;
 	}
 	buf = get_buf(buf_dst, bufMDL);
@@ -245,7 +245,7 @@ store_urb_data(PURB urb, struct usbip_header *hdr)
 		status = store_urb_control_transfer_ex(urb, hdr);
 		break;
 	default:
-		DBGE(DBG_WRITE, "not supported func: %s\n", dbg_urbfunc(urb->UrbHeader.Function));
+		DBGE(DBG_WRITE, "not supported func: %s", dbg_urbfunc(urb->UrbHeader.Function));
 		status = STATUS_INVALID_PARAMETER;
 		break;
 	}
@@ -269,7 +269,7 @@ process_urb_res_submit(pusbip_vpdo_dev_t vpdo, PURB urb, struct usbip_header *hd
 		if (urb->UrbHeader.Function == URB_FUNCTION_BULK_OR_INTERRUPT_TRANSFER) {
 			urb->UrbBulkOrInterruptTransfer.TransferBufferLength = hdr->u.ret_submit.actual_length;
 		}
-		DBGW(DBG_WRITE, "%s: wrong status: %s\n", dbg_urbfunc(urb->UrbHeader.Function), dbg_usbd_status(urb->UrbHeader.Status));
+		DBGW(DBG_WRITE, "%s: wrong status: %s", dbg_urbfunc(urb->UrbHeader.Function), dbg_usbd_status(urb->UrbHeader.Status));
 		return STATUS_UNSUCCESSFUL;
 	}
 
@@ -301,7 +301,7 @@ process_urb_res(struct urb_req *urbr, struct usbip_header *hdr)
 	irpstack = IoGetCurrentIrpStackLocation(urbr->irp);
 	ioctl_code = irpstack->Parameters.DeviceIoControl.IoControlCode;
 
-	DBGI(DBG_WRITE, "process_urb_res: urbr:%s, ioctl:%s\n", dbg_urbr(urbr), dbg_vhci_ioctl_code(ioctl_code));
+	DBGI(DBG_WRITE, "process_urb_res: urbr:%s, ioctl:%s", dbg_urbr(urbr), dbg_vhci_ioctl_code(ioctl_code));
 
 	switch (ioctl_code) {
 	case IOCTL_INTERNAL_USB_SUBMIT_URB:
@@ -309,7 +309,7 @@ process_urb_res(struct urb_req *urbr, struct usbip_header *hdr)
 	case IOCTL_INTERNAL_USB_RESET_PORT:
 		return STATUS_SUCCESS;
 	default:
-		DBGE(DBG_WRITE, "unhandled ioctl: %s\n", dbg_vhci_ioctl_code(ioctl_code));
+		DBGE(DBG_WRITE, "unhandled ioctl: %s", dbg_vhci_ioctl_code(ioctl_code));
 		return STATUS_INVALID_PARAMETER;
 	}
 }
@@ -339,14 +339,14 @@ process_write_irp(pusbip_vpdo_dev_t vpdo, PIRP write_irp)
 
 	hdr = get_usbip_hdr_from_write_irp(write_irp);
 	if (hdr == NULL) {
-		DBGE(DBG_WRITE, "small write irp\n");
+		DBGE(DBG_WRITE, "small write irp");
 		return STATUS_INVALID_PARAMETER;
 	}
 
 	urbr = find_sent_urbr(vpdo, hdr);
 	if (urbr == NULL) {
 		// Might have been cancelled before, so return STATUS_SUCCESS
-		DBGE(DBG_WRITE, "no urbr: seqnum: %d\n", hdr->base.seqnum);
+		DBGE(DBG_WRITE, "no urbr: seqnum: %d", hdr->base.seqnum);
 		return STATUS_SUCCESS;
 	}
 
@@ -392,10 +392,10 @@ vhci_write(__in PDEVICE_OBJECT devobj, __in PIRP Irp)
 
 	devcom = (pdev_common_t)devobj->DeviceExtension;
 
-	DBGI(DBG_GENERAL | DBG_WRITE, "vhci_write: Enter\n");
+	DBGI(DBG_GENERAL | DBG_WRITE, "vhci_write: Enter");
 
 	if (!devcom->is_vhub) {
-		DBGE(DBG_WRITE, "write for vhub is not allowed\n");
+		DBGE(DBG_WRITE, "write for vhub is not allowed");
 
 		Irp->IoStatus.Status = STATUS_INVALID_DEVICE_REQUEST;
 		IoCompleteRequest(Irp, IO_NO_INCREMENT);
@@ -419,7 +419,7 @@ vhci_write(__in PDEVICE_OBJECT devobj, __in PIRP Irp)
 	Irp->IoStatus.Information = 0;
 	status = process_write_irp(vpdo, Irp);
 END:
-	DBGI(DBG_WRITE, "vhci_write: Leave: %s\n", dbg_ntstatus(status));
+	DBGI(DBG_WRITE, "vhci_write: Leave: %s", dbg_ntstatus(status));
 	Irp->IoStatus.Status = status;
 	IoCompleteRequest(Irp, IO_NO_INCREMENT);
 	dec_io_vhub(vhub);

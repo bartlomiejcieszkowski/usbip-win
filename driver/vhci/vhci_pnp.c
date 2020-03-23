@@ -30,7 +30,7 @@ vhci_add_device(__in PDRIVER_OBJECT drvobj, __in PDEVICE_OBJECT devobj_lower)
 
 	PAGED_CODE();
 
-	DBGI(DBG_GENERAL | DBG_PNP, "Add Device: 0x%p\n", devobj_lower);
+	DBGI(DBG_GENERAL | DBG_PNP, "Add Device: 0x%p", devobj_lower);
 
 	status = IoCreateDevice(drvobj, sizeof(usbip_vhub_dev_t), NULL,
 		FILE_DEVICE_BUS_EXTENDER, FILE_DEVICE_SECURE_OPEN, TRUE, &devobj);
@@ -99,14 +99,14 @@ vhci_add_device(__in PDRIVER_OBJECT drvobj, __in PDEVICE_OBJECT devobj_lower)
 	status = IoGetDeviceProperty(devobj_lower, DevicePropertyPhysicalDeviceObjectName, 0, NULL, &nameLength);
 
 	if (status != STATUS_BUFFER_TOO_SMALL) {
-		DBGE(DBG_PNP, "AddDevice:IoGDP failed (0x%x)\n", status);
+		DBGE(DBG_PNP, "AddDevice:IoGDP failed (0x%x)", status);
 		goto End;
 	}
 
 	deviceName = ExAllocatePoolWithTag (NonPagedPool, nameLength, USBIP_VHCI_POOL_TAG);
 
 	if (NULL == deviceName) {
-		DBGE(DBG_PNP, "AddDevice: no memory to alloc for deviceName(0x%x)\n", nameLength);
+		DBGE(DBG_PNP, "AddDevice: no memory to alloc for deviceName(0x%x)", nameLength);
 		status =  STATUS_INSUFFICIENT_RESOURCES;
 		goto End;
 	}
@@ -119,7 +119,7 @@ vhci_add_device(__in PDRIVER_OBJECT drvobj, __in PDEVICE_OBJECT devobj_lower)
 		goto End;
 	}
 
-	DBGI(DBG_PNP, "AddDevice: %p to %p->%p (%ws) \n", vhub, vhub->NextLowerDriver, devobj_lower, deviceName);
+	DBGI(DBG_PNP, "AddDevice: %p to %p->%p (%ws) ", vhub, vhub->NextLowerDriver, devobj_lower, deviceName);
 #endif
 
 	// We are done with initializing, so let's indicate that and return.
@@ -177,7 +177,7 @@ destroy_vpdo(pusbip_vpdo_dev_t vpdo)
 		vpdo->fo->FsContext = NULL;
 		vpdo->fo = NULL;
 	}
-	DBGI(DBG_PNP, "Deleting vpdo: 0x%p\n", vpdo);
+	DBGI(DBG_PNP, "Deleting vpdo: 0x%p", vpdo);
 	IoDeleteDevice(vpdo->common.Self);
 	return STATUS_SUCCESS;
 }
@@ -199,7 +199,7 @@ start_vhub(pusbip_vhub_dev_t vhub)
 	// is stopped and restarted for resource rebalancing.
 	status = IoSetDeviceInterfaceState(&vhub->InterfaceName, TRUE);
 	if (!NT_SUCCESS(status)) {
-		DBGE(DBG_PNP, "IoSetDeviceInterfaceState failed: 0x%x\n", status);
+		DBGE(DBG_PNP, "IoSetDeviceInterfaceState failed: 0x%x", status);
 		return status;
 	}
 
@@ -217,7 +217,7 @@ start_vhub(pusbip_vhub_dev_t vhub)
 	// Register with WMI
 	status = reg_wmi(vhub);
 	if (!NT_SUCCESS(status)) {
-		DBGE(DBG_PNP, "start_vhub: reg_wmi failed (%x)\n", status);
+		DBGE(DBG_PNP, "start_vhub: reg_wmi failed (%x)", status);
 	}
 
 	return status;
@@ -439,7 +439,7 @@ vhci_pnp_vhub(PDEVICE_OBJECT devobj, PIRP Irp, PIO_STACK_LOCATION IrpStack, pusb
 				// the parent's vpdo list, when the system finally
 				// removes the vpdo. Let's also not forget to set the
 				// ReportedMissing flag to cause the deletion of the vpdo.
-				DBGI(DBG_PNP, "\tFound a surprise removed device: 0x%p\n", vpdo->common.Self);
+				DBGI(DBG_PNP, "\tFound a surprise removed device: 0x%p", vpdo->common.Self);
 				InitializeListHead(&vpdo->Link);
 				vpdo->vhub = NULL;
 				vpdo->ReportedMissing = TRUE;
@@ -461,13 +461,13 @@ vhci_pnp_vhub(PDEVICE_OBJECT devobj, PIRP Irp, PIO_STACK_LOCATION IrpStack, pusb
 		// Detach from the underlying devices.
 		IoDetachDevice(vhub->NextLowerDriver);
 
-		DBGI(DBG_PNP, "Deleting vhub device object: 0x%p\n", devobj);
+		DBGI(DBG_PNP, "Deleting vhub device object: 0x%p", devobj);
 
 		IoDeleteDevice(devobj);
 
 		return status;
 	case IRP_MN_QUERY_DEVICE_RELATIONS:
-		DBGI(DBG_PNP, "\tQueryDeviceRelation Type: %s\n", dbg_dev_relation(IrpStack->Parameters.QueryDeviceRelations.Type));
+		DBGI(DBG_PNP, "\tQueryDeviceRelation Type: %s", dbg_dev_relation(IrpStack->Parameters.QueryDeviceRelations.Type));
 
 		if (BusRelations != IrpStack->Parameters.QueryDeviceRelations.Type) {
 			// We don't support any other Device Relations
@@ -543,7 +543,7 @@ vhci_pnp_vhub(PDEVICE_OBJECT devobj, PIRP Irp, PIO_STACK_LOCATION IrpStack, pusb
 			}
 		}
 
-		DBGI(DBG_PNP, "# of vpdo's: present: %d, reported: %d\n", vhub->n_vpdos, relations->Count);
+		DBGI(DBG_PNP, "# of vpdo's: present: %d, reported: %d", vhub->n_vpdos, relations->Count);
 
 		// Replace the relations structure in the IRP with the new
 		// one.
@@ -579,7 +579,7 @@ vhci_pnp(__in PDEVICE_OBJECT devobj, __in PIRP Irp)
 
 	PAGED_CODE();
 
-	DBGI(DBG_GENERAL | DBG_PNP, "vhci_pnp: Enter\n");
+	DBGI(DBG_GENERAL | DBG_PNP, "vhci_pnp: Enter");
 
 	irpStack = IoGetCurrentIrpStackLocation(Irp);
 	ASSERT(IRP_MJ_PNP == irpStack->MajorFunction);
@@ -595,19 +595,19 @@ vhci_pnp(__in PDEVICE_OBJECT devobj, __in PIRP Irp)
 	}
 
 	if (devcom->is_vhub) {
-		DBGI(DBG_PNP, "vhub: minor: %s, IRP:0x%p\n", dbg_pnp_minor(irpStack->MinorFunction), Irp);
+		DBGI(DBG_PNP, "vhub: minor: %s, IRP:0x%p", dbg_pnp_minor(irpStack->MinorFunction), Irp);
 
 		// Request is for the vhub
 		status = vhci_pnp_vhub(devobj, Irp, irpStack, (pusbip_vhub_dev_t)devcom);
 	}
 	else {
-		DBGI(DBG_PNP, "vpdo: minor: %s, IRP: 0x%p\n", dbg_pnp_minor(irpStack->MinorFunction), Irp);
+		DBGI(DBG_PNP, "vpdo: minor: %s, IRP: 0x%p", dbg_pnp_minor(irpStack->MinorFunction), Irp);
 
 		// Request is for the child vpdo.
 		status = vhci_pnp_vpdo(devobj, Irp, irpStack, (pusbip_vpdo_dev_t)devcom);
 	}
 
-	DBGI(DBG_GENERAL | DBG_PNP, "vhci_pnp: Leave: %s\n", dbg_ntstatus(status));
+	DBGI(DBG_GENERAL | DBG_PNP, "vhci_pnp: Leave: %s", dbg_ntstatus(status));
 
 	return status;
 }
@@ -649,7 +649,7 @@ complete_pending_irp(pusbip_vpdo_dev_t vpdo)
 	KIRQL	oldirql;
 	BOOLEAN	valid_irp;
 
-	DBGI(DBG_PNP, "finish pending irp\n");
+	DBGI(DBG_PNP, "finish pending irp");
 	
 	KeAcquireSpinLock(&vpdo->lock_urbr, &oldirql);
 	while(!IsListEmpty(&vpdo->head_urbr)) {
@@ -694,7 +694,7 @@ vhci_init_vpdo(pusbip_vpdo_dev_t vpdo)
 
 	PAGED_CODE();
 
-	DBGI(DBG_PNP, "vhci_init_vpdo: 0x%p\n", vpdo);
+	DBGI(DBG_PNP, "vhci_init_vpdo: 0x%p", vpdo);
 
 	vpdo->Present = TRUE; // attached to the bus
 	vpdo->ReportedMissing = FALSE; // not yet reported missing
@@ -729,7 +729,7 @@ vhci_get_ports_status(ioctl_usbip_vhci_get_ports_status *st, pusbip_vhub_dev_t v
 
 	PAGED_CODE();
 
-	DBGI(DBG_PNP, "get ports status\n");
+	DBGI(DBG_PNP, "get ports status");
 
 	RtlZeroMemory(st, sizeof(*st));
 	ExAcquireFastMutex(&vhub->Mutex);
@@ -766,14 +766,14 @@ vhci_unplug_dev(ULONG port, pusbip_vhub_dev_t vhub)
 	ExAcquireFastMutex(&vhub->Mutex);
 
 	if (all) {
-		DBGI(DBG_PNP, "Plugging out all the devices!\n");
+		DBGI(DBG_PNP, "Plugging out all the devices!");
 	} else {
-		DBGI(DBG_PNP, "Plugging out single device: port: %u\n", port);
+		DBGI(DBG_PNP, "Plugging out single device: port: %u", port);
 	}
 
 	if (vhub->n_vpdos == 0) {
 		// We got a 2nd plugout...somebody in user space isn't playing nice!!!
-		DBGW(DBG_PNP, "BAD BAD BAD...2 removes!!! Send only one!\n");
+		DBGW(DBG_PNP, "BAD BAD BAD...2 removes!!! Send only one!");
 		ExReleaseFastMutex(&vhub->Mutex);
 		return STATUS_NO_SUCH_DEVICE;
 	}
@@ -781,10 +781,10 @@ vhci_unplug_dev(ULONG port, pusbip_vhub_dev_t vhub)
 	for (entry = vhub->head_vpdo.Flink; entry != &vhub->head_vpdo; entry = entry->Flink) {
 		vpdo = CONTAINING_RECORD(entry, usbip_vpdo_dev_t, Link);
 
-		DBGI(DBG_PNP, "found device: port: %d\n", vpdo->port);
+		DBGI(DBG_PNP, "found device: port: %d", vpdo->port);
 
 		if (all || port == vpdo->port) {
-			DBGI(DBG_PNP, "Plugging out: port: %u\n", vpdo->port);
+			DBGI(DBG_PNP, "Plugging out: port: %u", vpdo->port);
 			vpdo->Present = FALSE;
 			complete_pending_read_irp(vpdo);
 			found = 1;
@@ -812,7 +812,7 @@ vhci_unplug_dev(ULONG port, pusbip_vhub_dev_t vhub)
 		}
 		ExReleaseFastMutex(&vhub->Mutex);
 
-		DBGI(DBG_PNP, "Device %u plug out finished\n", port);
+		DBGI(DBG_PNP, "Device %u plug out finished", port);
 		return  STATUS_SUCCESS;
 	}
 
@@ -833,14 +833,14 @@ vhci_eject_device(PUSBIP_VHCI_EJECT_HARDWARE Eject, pusbip_vhub_dev_t vhub)
 	ExAcquireFastMutex(&vhub->Mutex);
 
 	if (ejectAll) {
-		DBGI(DBG_PNP, "Ejecting all the vpdo's!\n");
+		DBGI(DBG_PNP, "Ejecting all the vpdo's!");
 	} else {
-		DBGI(DBG_PNP, "Ejecting: port: %u\n", Eject->port);
+		DBGI(DBG_PNP, "Ejecting: port: %u", Eject->port);
 	}
 
 	if (vhub->n_vpdos == 0) {
 		// Somebody in user space isn't playing nice!!!
-		DBGW(DBG_PNP, "No devices to eject!\n");
+		DBGW(DBG_PNP, "No devices to eject!");
 		ExReleaseFastMutex(&vhub->Mutex);
 		return STATUS_NO_SUCH_DEVICE;
 	}
@@ -849,10 +849,10 @@ vhci_eject_device(PUSBIP_VHCI_EJECT_HARDWARE Eject, pusbip_vhub_dev_t vhub)
 	for (entry = vhub->head_vpdo.Flink; entry != &vhub->head_vpdo; entry = entry->Flink) {
 		vpdo = CONTAINING_RECORD(entry, usbip_vpdo_dev_t, Link);
 
-		DBGI(DBG_PNP, "found device: %u\n", vpdo->port);
+		DBGI(DBG_PNP, "found device: %u", vpdo->port);
 
 		if (ejectAll || Eject->port == vpdo->port) {
-			DBGI(DBG_PNP, "Ejected: %u\n", vpdo->port);
+			DBGI(DBG_PNP, "Ejected: %u", vpdo->port);
 			found = TRUE;
 			IoRequestDeviceEject(vpdo->common.Self);
 			if (!ejectAll) {
@@ -866,7 +866,7 @@ vhci_eject_device(PUSBIP_VHCI_EJECT_HARDWARE Eject, pusbip_vhub_dev_t vhub)
 		return STATUS_SUCCESS;
 	}
 
-	DBGW(DBG_PNP, "Device %u is not present\n", Eject->port);
+	DBGW(DBG_PNP, "Device %u is not present", Eject->port);
 
 	return STATUS_INVALID_PARAMETER;
 }

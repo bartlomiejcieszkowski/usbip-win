@@ -97,7 +97,7 @@ store_urb_reset_pipe(PIRP irp, PURB urb, struct urb_req *urbr)
 	in = PIPE2DIRECT(urb_rp->PipeHandle);
 	type = PIPE2TYPE(urb_rp->PipeHandle);
 	if (type != USB_ENDPOINT_TYPE_BULK && type != USB_ENDPOINT_TYPE_INTERRUPT) {
-		DBGW(DBG_READ, "CLEAR not allowed to a non-bulk pipe[%d]\n", type);
+		DBGW(DBG_READ, "CLEAR not allowed to a non-bulk pipe[%d]", type);
 		return STATUS_INVALID_PARAMETER;
 	}
 
@@ -126,7 +126,7 @@ get_buf(PVOID buf, PMDL bufMDL)
 		if (bufMDL != NULL)
 			buf = MmGetSystemAddressForMdlSafe(bufMDL, LowPagePriority);
 		if (buf == NULL) {
-			DBGE(DBG_READ, "No transfer buffer\n");
+			DBGE(DBG_READ, "No transfer buffer");
 		}
 	}
 	return buf;
@@ -387,7 +387,7 @@ store_urb_bulk(PIRP irp, PURB urb, struct urb_req *urbr)
 	in = PIPE2DIRECT(urb_bi->PipeHandle);
 	type = PIPE2TYPE(urb_bi->PipeHandle);
 	if (type != USB_ENDPOINT_TYPE_BULK && type != USB_ENDPOINT_TYPE_INTERRUPT) {
-		DBGE(DBG_READ, "Error, not a bulk pipe\n");
+		DBGE(DBG_READ, "Error, not a bulk pipe");
 		return STATUS_INVALID_PARAMETER;
 	}
 
@@ -491,7 +491,7 @@ store_urb_iso(PIRP irp, PURB urb, struct urb_req *urbr)
 	in = PIPE2DIRECT(urb_iso->PipeHandle);
 	type = PIPE2TYPE(urb_iso->PipeHandle);
 	if (type != USB_ENDPOINT_TYPE_ISOCHRONOUS) {
-		DBGE(DBG_READ, "Error, not a iso pipe\n");
+		DBGE(DBG_READ, "Error, not a iso pipe");
 		return STATUS_INVALID_PARAMETER;
 	}
 
@@ -553,7 +553,7 @@ store_urb_control_transfer_ex(PIRP irp, PURB urb, struct urb_req* urbr)
 
 	hdr = get_usbip_hdr_from_read_irp(irp);
 	if (hdr == NULL) {
-		DBGE(DBG_READ, "Cannot get usbip header\n");
+		DBGE(DBG_READ, "Cannot get usbip header");
 		return STATUS_BUFFER_TOO_SMALL;
 	}
 
@@ -586,19 +586,19 @@ store_urbr_submit(PIRP irp, struct urb_req *urbr)
 	USHORT		code_func;
 	NTSTATUS	status;
 
-	DBGI(DBG_READ, "store_urbr_submit: urbr: %s\n", dbg_urbr(urbr));
+	DBGI(DBG_READ, "store_urbr_submit: urbr: %s", dbg_urbr(urbr));
 
 	irpstack = IoGetCurrentIrpStackLocation(urbr->irp);
 	urb = irpstack->Parameters.Others.Argument1;
 	if (urb == NULL) {
-		DBGE(DBG_READ, "store_urbr_submit: null urb\n");
+		DBGE(DBG_READ, "store_urbr_submit: null urb");
 
 		irp->IoStatus.Information = 0;
 		return STATUS_INVALID_DEVICE_REQUEST;
 	}
 
 	code_func = urb->UrbHeader.Function;
-	DBGI(DBG_READ, "store_urbr_submit: urbr: %s, func:%s\n", dbg_urbr(urbr), dbg_urbfunc(code_func));
+	DBGI(DBG_READ, "store_urbr_submit: urbr: %s, func:%s", dbg_urbr(urbr), dbg_urbfunc(code_func));
 
 	switch (code_func) {
 	case URB_FUNCTION_BULK_OR_INTERRUPT_TRANSFER:
@@ -636,7 +636,7 @@ store_urbr_submit(PIRP irp, struct urb_req *urbr)
 		break;
 	default:
 		irp->IoStatus.Information = 0;
-		DBGE(DBG_READ, "unhandled urb function: %s\n", dbg_urbfunc(code_func));
+		DBGE(DBG_READ, "unhandled urb function: %s", dbg_urbfunc(code_func));
 		status = STATUS_INVALID_PARAMETER;
 		break;
 	}
@@ -652,7 +652,7 @@ store_urbr_partial(PIRP irp, struct urb_req *urbr)
 	USHORT		code_func;
 	NTSTATUS	status;
 
-	DBGI(DBG_READ, "store_urbr_partial: Enter: urbr: %s\n", dbg_urbr(urbr));
+	DBGI(DBG_READ, "store_urbr_partial: Enter: urbr: %s", dbg_urbr(urbr));
 
 	irpstack = IoGetCurrentIrpStackLocation(urbr->irp);
 	urb = irpstack->Parameters.Others.Argument1;
@@ -679,11 +679,11 @@ store_urbr_partial(PIRP irp, struct urb_req *urbr)
 		break;
 	default:
 		irp->IoStatus.Information = 0;
-		DBGE(DBG_READ, "store_urbr_partial: unexpected partial urbr: %s\n", dbg_urbfunc(code_func));
+		DBGE(DBG_READ, "store_urbr_partial: unexpected partial urbr: %s", dbg_urbfunc(code_func));
 		status = STATUS_INVALID_PARAMETER;
 		break;
 	}
-	DBGI(DBG_READ, "store_urbr_partial: Leave: %s\n", dbg_ntstatus(status));
+	DBGI(DBG_READ, "store_urbr_partial: Leave: %s", dbg_ntstatus(status));
 
 	return status;
 }
@@ -693,7 +693,7 @@ store_cancelled_urbr(PIRP irp, struct urb_req *urbr)
 {
 	struct usbip_header	*hdr;
 
-	DBGI(DBG_READ, "store_cancelled_urbr: Enter\n");
+	DBGI(DBG_READ, "store_cancelled_urbr: Enter");
 
 	hdr = get_usbip_hdr_from_read_irp(irp);
 	if (hdr == NULL)
@@ -712,7 +712,7 @@ store_urbr(PIRP irp, struct urb_req *urbr)
 	ULONG		ioctl_code;
 	NTSTATUS	status;
 
-	DBGI(DBG_READ, "store_urbr: urbr: %s\n", dbg_urbr(urbr));
+	DBGI(DBG_READ, "store_urbr: urbr: %s", dbg_urbr(urbr));
 
 	if (urbr->irp == NULL) {
 		return store_cancelled_urbr(irp, urbr);
@@ -728,7 +728,7 @@ store_urbr(PIRP irp, struct urb_req *urbr)
 		status = store_urb_reset_dev(irp, urbr);
 		break;
 	default:
-		DBGW(DBG_READ, "unhandled ioctl: %s\n", dbg_vhci_ioctl_code(ioctl_code));
+		DBGW(DBG_READ, "unhandled ioctl: %s", dbg_vhci_ioctl_code(ioctl_code));
 		irp->IoStatus.Information = 0;
 		status = STATUS_INVALID_PARAMETER;
 		break;
@@ -763,7 +763,7 @@ process_read_irp(pusbip_vpdo_dev_t vpdo, PIRP read_irp)
 	KIRQL	oldirql;
 	NTSTATUS status;
 
-	DBGI(DBG_GENERAL | DBG_READ, "process_read_irp: Enter\n");
+	DBGI(DBG_GENERAL | DBG_READ, "process_read_irp: Enter");
 
 	KeAcquireSpinLock(&vpdo->lock_urbr, &oldirql);
 	if (vpdo->pending_read_irp) {
@@ -845,10 +845,10 @@ vhci_read(__in PDEVICE_OBJECT devobj, __in PIRP irp)
 
 	devcom = (pdev_common_t)devobj->DeviceExtension;
 
-	DBGI(DBG_GENERAL | DBG_READ, "vhci_read: Enter\n");
+	DBGI(DBG_GENERAL | DBG_READ, "vhci_read: Enter");
 
 	if (!devcom->is_vhub) {
-		DBGE(DBG_READ, "read for vhub is not allowed\n");
+		DBGE(DBG_READ, "read for vhub is not allowed");
 
 		irp->IoStatus.Status = STATUS_INVALID_DEVICE_REQUEST;
 		IoCompleteRequest(irp, IO_NO_INCREMENT);
@@ -872,7 +872,7 @@ vhci_read(__in PDEVICE_OBJECT devobj, __in PIRP irp)
 		status = process_read_irp(vpdo, irp);
 
 END:
-	DBGI(DBG_GENERAL | DBG_READ, "vhci_read: Leave: %s\n", dbg_ntstatus(status));
+	DBGI(DBG_GENERAL | DBG_READ, "vhci_read: Leave: %s", dbg_ntstatus(status));
 	if (status != STATUS_PENDING) {
 		irp->IoStatus.Status = status;
 		IoCompleteRequest(irp, IO_NO_INCREMENT);

@@ -22,13 +22,13 @@ vhci_ioctl_abort_pipe(pusbip_vpdo_dev_t vpdo, USBD_PIPE_HANDLE hPipe)
 	unsigned char	epaddr;
 
 	if (!hPipe) {
-		DBGI(DBG_IOCTL, "vhci_ioctl_abort_pipe: empty pipe handle\n");
+		DBGI(DBG_IOCTL, "vhci_ioctl_abort_pipe: empty pipe handle");
 		return STATUS_INVALID_PARAMETER;
 	}
 
 	epaddr = PIPE2ADDR(hPipe);
 
-	DBGI(DBG_IOCTL, "vhci_ioctl_abort_pipe: EP: %02x\n", epaddr);
+	DBGI(DBG_IOCTL, "vhci_ioctl_abort_pipe: EP: %02x", epaddr);
 
 	KeAcquireSpinLock(&vpdo->lock_urbr, &oldirql);
 
@@ -40,7 +40,7 @@ vhci_ioctl_abort_pipe(pusbip_vpdo_dev_t vpdo, USBD_PIPE_HANDLE hPipe)
 		if (!is_port_urbr(urbr_local, epaddr))
 			continue;
 
-		DBGI(DBG_IOCTL, "aborted urbr removed: %s\n", dbg_urbr(urbr_local));
+		DBGI(DBG_IOCTL, "aborted urbr removed: %s", dbg_urbr(urbr_local));
 
 		if (urbr_local->irp) {
 			PIRP	irp = urbr_local->irp;
@@ -96,11 +96,11 @@ static NTSTATUS
 process_irp_urb_req(pusbip_vpdo_dev_t vpdo, PIRP irp, PURB urb)
 {
 	if (urb == NULL) {
-		DBGE(DBG_IOCTL, "process_irp_urb_req: null urb\n");
+		DBGE(DBG_IOCTL, "process_irp_urb_req: null urb");
 		return STATUS_INVALID_PARAMETER;
 	}
 
-	DBGI(DBG_IOCTL, "process_irp_urb_req: function: %s\n", dbg_urbfunc(urb->UrbHeader.Function));
+	DBGI(DBG_IOCTL, "process_irp_urb_req: function: %s", dbg_urbfunc(urb->UrbHeader.Function));
 
 	switch (urb->UrbHeader.Function) {
 	case URB_FUNCTION_ABORT_PIPE:
@@ -125,7 +125,7 @@ process_irp_urb_req(pusbip_vpdo_dev_t vpdo, PIRP irp, PURB urb)
 	case URB_FUNCTION_CONTROL_TRANSFER_EX:
 		return submit_urbr_irp(vpdo, irp);
 	default:
-		DBGW(DBG_IOCTL, "process_irp_urb_req: unhandled function: %s: len: %d\n",
+		DBGW(DBG_IOCTL, "process_irp_urb_req: unhandled function: %s: len: %d",
 			dbg_urbfunc(urb->UrbHeader.Function), urb->UrbHeader.Length);
 		return STATUS_INVALID_PARAMETER;
 	}
@@ -154,15 +154,15 @@ vhci_internal_ioctl(__in PDEVICE_OBJECT devobj, __in PIRP Irp)
 
 	devcom = (pdev_common_t)devobj->DeviceExtension;
 
-	DBGI(DBG_GENERAL | DBG_IOCTL, "vhci_internal_ioctl: Enter %p\n", Irp);
+	DBGI(DBG_GENERAL | DBG_IOCTL, "vhci_internal_ioctl: Enter %p", Irp);
 
 	irpStack = IoGetCurrentIrpStackLocation(Irp);
 	ioctl_code = irpStack->Parameters.DeviceIoControl.IoControlCode;
 
-	DBGI(DBG_IOCTL, "ioctl code: %s\n", dbg_vhci_ioctl_code(ioctl_code));
+	DBGI(DBG_IOCTL, "ioctl code: %s", dbg_vhci_ioctl_code(ioctl_code));
 
 	if (devcom->is_vhub) {
-		DBGW(DBG_IOCTL, "internal ioctl for vhub is not allowed\n");
+		DBGW(DBG_IOCTL, "internal ioctl for vhub is not allowed");
 		Irp->IoStatus.Status = STATUS_INVALID_DEVICE_REQUEST;
 		IoCompleteRequest(Irp, IO_NO_INCREMENT);
 		return STATUS_INVALID_DEVICE_REQUEST;
@@ -171,7 +171,7 @@ vhci_internal_ioctl(__in PDEVICE_OBJECT devobj, __in PIRP Irp)
 	vpdo = (pusbip_vpdo_dev_t)devobj->DeviceExtension;
 
 	if (!vpdo->Present) {
-		DBGW(DBG_IOCTL, "device is not connected\n");
+		DBGW(DBG_IOCTL, "device is not connected");
 		Irp->IoStatus.Status = STATUS_DEVICE_NOT_CONNECTED;
 		IoCompleteRequest(Irp, IO_NO_INCREMENT);
 		return STATUS_DEVICE_NOT_CONNECTED;
@@ -192,7 +192,7 @@ vhci_internal_ioctl(__in PDEVICE_OBJECT devobj, __in PIRP Irp)
 		status = setup_topology_address(vpdo, irpStack);
 		break;
 	default:
-		DBGE(DBG_IOCTL, "unhandled internal ioctl: %s\n", dbg_vhci_ioctl_code(ioctl_code));
+		DBGE(DBG_IOCTL, "unhandled internal ioctl: %s", dbg_vhci_ioctl_code(ioctl_code));
 		status = STATUS_INVALID_PARAMETER;
 		break;
 	}
@@ -203,7 +203,7 @@ vhci_internal_ioctl(__in PDEVICE_OBJECT devobj, __in PIRP Irp)
 		IoCompleteRequest(Irp, IO_NO_INCREMENT);
 	}
 
-	DBGI(DBG_GENERAL | DBG_IOCTL, "vhci_internal_ioctl: Leave: %s\n", dbg_ntstatus(status));
+	DBGI(DBG_GENERAL | DBG_IOCTL, "vhci_internal_ioctl: Leave: %s", dbg_ntstatus(status));
 	return status;
 }
 
@@ -223,11 +223,11 @@ vhci_ioctl(__in PDEVICE_OBJECT devobj, __in PIRP Irp)
 
 	devcom = (pdev_common_t)devobj->DeviceExtension;
 
-	DBGI(DBG_GENERAL | DBG_IOCTL, "vhci_ioctl: Enter\n");
+	DBGI(DBG_GENERAL | DBG_IOCTL, "vhci_ioctl: Enter");
 
 	// We only allow create/close requests for the vhub.
 	if (!devcom->is_vhub) {
-		DBGE(DBG_IOCTL, "ioctl for vhub is not allowed\n");
+		DBGE(DBG_IOCTL, "ioctl for vhub is not allowed");
 
 		Irp->IoStatus.Information = 0;
 		Irp->IoStatus.Status = status = STATUS_INVALID_DEVICE_REQUEST;
@@ -239,7 +239,7 @@ vhci_ioctl(__in PDEVICE_OBJECT devobj, __in PIRP Irp)
 	irpStack = IoGetCurrentIrpStackLocation(Irp);
 
 	ioctl_code = irpStack->Parameters.DeviceIoControl.IoControlCode;
-	DBGI(DBG_IOCTL, "ioctl code: %s\n", dbg_vhci_ioctl_code(ioctl_code));
+	DBGI(DBG_IOCTL, "ioctl code: %s", dbg_vhci_ioctl_code(ioctl_code));
 
 	inc_io_vhub(vhub);
 
@@ -287,7 +287,7 @@ END:
 	IoCompleteRequest(Irp, IO_NO_INCREMENT);
 	dec_io_vhub(vhub);
 
-	DBGI(DBG_GENERAL | DBG_IOCTL, "vhci_ioctl: Leave: %s\n", dbg_ntstatus(status));
+	DBGI(DBG_GENERAL | DBG_IOCTL, "vhci_ioctl: Leave: %s", dbg_ntstatus(status));
 
 	return status;
 }

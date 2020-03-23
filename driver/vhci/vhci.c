@@ -44,7 +44,7 @@ vhci_driverUnload(__in PDRIVER_OBJECT drvobj)
 
 	PAGED_CODE();
 
-	DBGI(DBG_GENERAL, "Unload\n");
+	DBGI(DBG_GENERAL, "Unload");
 
 	ExDeleteNPagedLookasideList(&g_lookaside);
 
@@ -109,13 +109,13 @@ vhci_cleanup(__in PDEVICE_OBJECT devobj, __in PIRP irp)
 
 	PAGED_CODE();
 
-	DBGI(DBG_GENERAL, "vhci_cleanup: Enter\n");
+	DBGI(DBG_GENERAL, "vhci_cleanup: Enter");
 
 	devcom = (pdev_common_t)devobj->DeviceExtension;
 
 	// We only allow create/close requests for the vhub.
 	if (!devcom->is_vhub) {
-		DBGW(DBG_GENERAL, "Bus_Cleanup: Invalid request\n");
+		DBGW(DBG_GENERAL, "Bus_Cleanup: Invalid request");
 		irp->IoStatus.Status = status = STATUS_INVALID_DEVICE_REQUEST;
 		IoCompleteRequest(irp, IO_NO_INCREMENT);
 		return status;
@@ -127,7 +127,7 @@ vhci_cleanup(__in PDEVICE_OBJECT devobj, __in PIRP irp)
 
 	// Check to see whether the bus is removed
 	if (vhub->common.DevicePnPState == Deleted) {
-		DBGW(DBG_GENERAL, "vhci_cleanup: No such device\n");
+		DBGW(DBG_GENERAL, "vhci_cleanup: No such device");
 		irp->IoStatus.Status = status = STATUS_NO_SUCH_DEVICE;
 		IoCompleteRequest(irp, IO_NO_INCREMENT);
 		return status;
@@ -146,7 +146,7 @@ vhci_cleanup(__in PDEVICE_OBJECT devobj, __in PIRP irp)
 	IoCompleteRequest(irp, IO_NO_INCREMENT);
 	dec_io_vhub(vhub);
 
-	DBGI(DBG_GENERAL, "vhci_cleanup: Leave\n");
+	DBGI(DBG_GENERAL, "vhci_cleanup: Leave");
 
 	return status;
 }
@@ -195,7 +195,7 @@ PAGEABLE NTSTATUS
 DriverEntry(__in PDRIVER_OBJECT drvobj, __in PUNICODE_STRING RegistryPath)
 {
 	PAGED_CODE();
-	DBGI(DBG_GENERAL, "DriverEntry: Enter\n"); // LOG BUILD TIME AND VERSION
+	DBGI(DBG_GENERAL, "DriverEntry: Enter"); // LOG BUILD TIME AND VERSION
 
 	ExInitializeNPagedLookasideList(&g_lookaside, NULL,NULL, 0, sizeof(struct urb_req), 'USBV', 0);
 
@@ -209,7 +209,7 @@ DriverEntry(__in PDRIVER_OBJECT drvobj, __in PUNICODE_STRING RegistryPath)
 		return STATUS_INSUFFICIENT_RESOURCES;
 	}
 
-	DBGI(DBG_GENERAL, "RegistryPath %p\r\n", RegistryPath);
+	DBGI(DBG_GENERAL, "RegistryPath %p\r", RegistryPath);
 
 	RtlCopyUnicodeString(&Globals.RegistryPath, RegistryPath);
 
@@ -227,7 +227,7 @@ DriverEntry(__in PDRIVER_OBJECT drvobj, __in PUNICODE_STRING RegistryPath)
 	drvobj->DriverUnload = vhci_driverUnload;
 	drvobj->DriverExtension->AddDevice = vhci_add_device;
 
-	DBGI(DBG_GENERAL, "DriverEntry: Leave\n");
+	DBGI(DBG_GENERAL, "DriverEntry: Leave");
 
 	return STATUS_SUCCESS;
 }

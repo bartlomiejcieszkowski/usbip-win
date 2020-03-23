@@ -38,7 +38,7 @@ vhci_system_control(__in  PDEVICE_OBJECT devobj, __in PIRP Irp)
 
 	PAGED_CODE();
 
-	DBGI(DBG_WMI, "vhci_system_control: Enter\n");
+	DBGI(DBG_WMI, "vhci_system_control: Enter");
 
 	stack = IoGetCurrentIrpStackLocation(Irp);
 
@@ -46,7 +46,7 @@ vhci_system_control(__in  PDEVICE_OBJECT devobj, __in PIRP Irp)
 
 	if (!devcom->is_vhub) {
 		// The vpdo, just complete the request with the current status
-		DBGI(DBG_WMI, "vpdo %s\n", dbg_wmi_minor(stack->MinorFunction));
+		DBGI(DBG_WMI, "vpdo %s", dbg_wmi_minor(stack->MinorFunction));
 		status = Irp->IoStatus.Status;
 		IoCompleteRequest (Irp, IO_NO_INCREMENT);
 		return status;
@@ -54,7 +54,7 @@ vhci_system_control(__in  PDEVICE_OBJECT devobj, __in PIRP Irp)
 
 	vhub = (pusbip_vhub_dev_t)devobj->DeviceExtension;
 
-	DBGI(DBG_WMI, "vhci: %s\n", dbg_wmi_minor(stack->MinorFunction));
+	DBGI(DBG_WMI, "vhci: %s", dbg_wmi_minor(stack->MinorFunction));
 
 	inc_io_vhub(vhub);
 
