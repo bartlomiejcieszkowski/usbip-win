@@ -97,6 +97,7 @@ static namecode_t	namecodes_wmi_minor[] = {
 	K_V(IRP_MN_QUERY_ALL_DATA)
 	K_V(IRP_MN_QUERY_SINGLE_INSTANCE)
 	K_V(IRP_MN_REGINFO)
+	K_V(IRP_MN_REGINFO_EX)
 	{0,0}
 };
 
