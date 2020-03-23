@@ -6,7 +6,7 @@
 #include "usbip_proto.h"
 #include "usbip_network.h"
 
-#define DEBUG_PDU
+//#define DEBUG_PDU
 
 #define BUFREAD_P(devbuf)	((devbuf)->offp - (devbuf)->offhdr)
 #define BUFREADMAX_P(devbuf)	((devbuf)->bufmaxp - (devbuf)->offp)
@@ -468,6 +468,7 @@ write_devbuf(devbuf_t *wbuff, devbuf_t *rbuff)
 		rbuff->bufmaxc = rbuff->offhdr;
 	}
 	if (!WriteFileEx(wbuff->hdev, BUFCUR_C(rbuff), BUFREMAIN_C(rbuff), &wbuff->ovs[1], write_completion)) {
+		info("WriteFileEx failed");
 		err("%s: failed to write sock: err: 0x%lx", __FUNCTION__, GetLastError());
 		return FALSE;
 	}
@@ -533,8 +534,10 @@ read_write_dev(devbuf_t *rbuff, devbuf_t *wbuff)
 
 	if (rbuff->in_reading)
 		return TRUE;
-	if ((res = read_dev(rbuff, wbuff->swap_req)) < 0)
+	if ((res = read_dev(rbuff, wbuff->swap_req)) < 0) {
+		info("read_dev failed");
 		return FALSE;
+	}
 	if (res == 0)
 		return TRUE;
 
@@ -584,22 +587,41 @@ usbip_forward(HANDLE hdev_src, HANDLE hdev_dst, BOOL inbound)
 	buff_src.peer = &buff_dst;
 	buff_dst.peer = &buff_src;
 
+	// Potential improvment:
+	// create 2 threads, 1 read, 1 write, then busy wait, so we wont spin cycles for nothing
+	// we would get rid of this SleepEx then so it should yield better performance
+
 	signal(SIGINT, signalhandler);
 
 	while (!interrupted) {
-		if (!read_write_dev(&buff_src, &buff_dst))
+		if (!read_write_dev(&buff_src, &buff_dst)) {
+			info("read_write_dev buff_src buff_dst failed");
 			break;
-		if (!read_write_dev(&buff_dst, &buff_src))
+		}
+		if (!read_write_dev(&buff_dst, &buff_src)) {
+			info("read_write_dev buff_dst buff_src failed");
 			break;
+		}
 
-		if (buff_src.invalid || buff_dst.invalid)
+		if (buff_src.invalid || buff_dst.invalid) {
+			info("invalid state src:%d dst:%d", buff_src.invalid, buff_dst.invalid);
 			break;
-		if (buff_src.in_reading && buff_dst.in_reading)
-			SleepEx(500, TRUE);
+		}
+		//if (buff_src.in_reading || buff_dst.in_reading) {
+			if (buff_src.in_reading && buff_dst.in_reading) {
+				SleepEx(100, TRUE);
+			}
+			/*else {
+				info("one in reading src:%u dst%u", buff_src.in_reading, buff_dst.in_reading);
+			}*/
+		//}
 	}
 
 	if (interrupted) {
 		info("CTRL-C received\n");
+	}
+	else {
+		info("break?!");
 	}
 
 	/* Cancel an uncompleted asynchronous read */
