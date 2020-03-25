@@ -144,6 +144,31 @@ setup_topology_address(pusbip_vpdo_dev_t vpdo, PIO_STACK_LOCATION irpStack)
 NTSTATUS
 vhci_internal_ioctl(__in PDEVICE_OBJECT devobj, __in PIRP Irp)
 {
+	LOG_IRQL_NE(PASSIVE_LEVEL);
+	pdev_common_t devcom;
+	pusbip_vpdo_dev_t vpdo;
+	
+
+	devcom = (pdev_common_t)devobj->DeviceExtension;
+	if (devcom->is_vhub) {
+		DBGW(DBG_IOCTL, "internal ioctl for vhub is not allowed");
+		Irp->IoStatus.Status = STATUS_INVALID_DEVICE_REQUEST;
+		IoCompleteRequest(Irp, IO_NO_INCREMENT);
+		return STATUS_INVALID_DEVICE_REQUEST;
+	}
+	vpdo = (pusbip_vpdo_dev_t)devobj->DeviceExtension;
+
+	KeReleaseSemaphore(&vpdo->PendingQueueNotEmpty, 0, 1, FALSE);
+	IoCsqInsertIrp(&vpdo->CancelSafePendingQueue, Irp, NULL);
+
+	// TODO thread with KeWaitForSingleObject
+
+	return STATUS_PENDING;
+}
+
+NTSTATUS
+vhci_internal_ioctl(__in PDEVICE_OBJECT devobj, __in PIRP Irp)
+{
 	PIO_STACK_LOCATION      irpStack;
 	NTSTATUS		status;
 	pusbip_vpdo_dev_t	vpdo;
@@ -151,6 +176,14 @@ vhci_internal_ioctl(__in PDEVICE_OBJECT devobj, __in PIRP Irp)
 	ULONG			ioctl_code;
 
 	LOG_IRQL_NE(PASSIVE_LEVEL);
+	if (KeGetCurrentIrql() == DISPATCH_LEVEL)
+	{
+		DBGI(DBG_GENERAL | DBG_IOCTL, "vhci_internal_ioctl: TODO queue for DPC level ones");
+		Irp->IoStatus.Information = 0;
+		Irp->IoStatus.Status = STATUS_INVALID_DEVICE_REQUEST;
+		IoCompleteRequest(Irp, IO_NO_INCREMENT);
+		return STATUS_INVALID_DEVICE_REQUEST;
+	}
 
 	devcom = (pdev_common_t)devobj->DeviceExtension;
 
