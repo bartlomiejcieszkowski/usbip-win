@@ -150,6 +150,17 @@ static int run_command(const struct command *cmd, int argc, char *argv[])
 
 int main(int argc, char *argv[])
 {
+	/* OPEN: Consider registering for Sleep/Shutdown request
+	 * https://docs.microsoft.com/en-us/windows/win32/power/registering-for-power-events
+	 * in the case of sleep we go down with a device
+	 * where after waking up the device is torn down
+	 * due to read error on the usbip.exe
+	 * usbip: error: read_devbuf: failed to read: err: 0x40
+	 * usbip: error: read_devbuf: could the client have dropped the connection?
+	 *
+	 * So my proposal is to gracefuly teardown device before sleep, this way we wont leave
+	 * device in some weird state for the server
+	 */
 	static const struct option opts[] = {
 		{ "debug",    no_argument,       NULL, 'd' },
 		{ "tcp-port", required_argument, NULL, 't' },
