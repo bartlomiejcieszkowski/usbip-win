@@ -3,6 +3,8 @@
 #include <ntddk.h>
 #include <wmilib.h>	// required for WMILIB_CONTEXT
 
+#include "csq_with_thread.h"
+
 #include "vhci_devconf.h"
 
 #define DEVOBJ_FROM_VPDO(vpdo)	((vpdo)->common.Self)
@@ -158,20 +160,7 @@ typedef struct
 	//
 	// The queue where the incoming requests are held when
 	// the device is stopped for resource rebalance.
-
-	// move this to separte struct
-	HANDLE PendingQueueThread;
-	// Something to wait on, so we avoid busy-wait in thread
-	KSEMAPHORE PendingQueueThreadSemaphore;
-	BOOLEAN PendingQueueThreadStop;
-
-	IO_CSQ CancelSafePendingQueue;
-	LIST_ENTRY PendingQueue;
-	
-
-	// The spin lock that protects access to  the queue
-
-	KSPIN_LOCK	PendingQueueLock;
+	csq_with_thread irp_internal_csq;
 	
 } usbip_vpdo_dev_t, *pusbip_vpdo_dev_t;
 

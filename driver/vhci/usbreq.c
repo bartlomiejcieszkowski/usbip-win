@@ -220,7 +220,9 @@ submit_urbr(pusbip_vpdo_dev_t vpdo, struct urb_req *urbr)
 			IoAcquireCancelSpinLock(&oldirql_cancel);
 			IoSetCancelRoutine(urbr->irp, cancel_urbr);
 			IoReleaseCancelSpinLock(oldirql_cancel);
+#if !USING_CSQ_WITH_THREAD
 			IoMarkIrpPending(urbr->irp);
+#endif
 		}
 		InsertTailList(&vpdo->head_urbr_pending, &urbr->list_state);
 		InsertTailList(&vpdo->head_urbr, &urbr->list_all);
@@ -260,7 +262,9 @@ submit_urbr(pusbip_vpdo_dev_t vpdo, struct urb_req *urbr)
 			IoAcquireCancelSpinLock(&oldirql_cancel);
 			IoSetCancelRoutine(urbr->irp, cancel_urbr);
 			IoReleaseCancelSpinLock(oldirql_cancel);
+#if !USING_CSQ_WITH_THREAD
 			IoMarkIrpPending(urbr->irp);
+#endif
 		}
 		if (vpdo->len_sent_partial == 0) {
 			vpdo->urbr_sent_partial = NULL;

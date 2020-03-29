@@ -158,8 +158,7 @@ vhci_internal_ioctl(__in PDEVICE_OBJECT devobj, __in PIRP Irp)
 	}
 	vpdo = (pusbip_vpdo_dev_t)devobj->DeviceExtension;
 
-	KeReleaseSemaphore(&vpdo->PendingQueueNotEmpty, 0, 1, FALSE);
-	IoCsqInsertIrp(&vpdo->CancelSafePendingQueue, Irp, NULL);
+	csq_with_thread_insert_irp(&vpdo->irp_internal_csq, Irp);
 
 	// TODO thread with KeWaitForSingleObject
 
@@ -167,8 +166,9 @@ vhci_internal_ioctl(__in PDEVICE_OBJECT devobj, __in PIRP Irp)
 }
 
 NTSTATUS
-vhci_internal_ioctl(__in PDEVICE_OBJECT devobj, __in PIRP Irp)
+vhci_internal_ioctl_process(__in PVOID context, __in PIRP Irp)
 {
+	PDEVICE_OBJECT devobj = (PDEVICE_OBJECT)context;
 	PIO_STACK_LOCATION      irpStack;
 	NTSTATUS		status;
 	pusbip_vpdo_dev_t	vpdo;
@@ -193,14 +193,6 @@ vhci_internal_ioctl(__in PDEVICE_OBJECT devobj, __in PIRP Irp)
 	ioctl_code = irpStack->Parameters.DeviceIoControl.IoControlCode;
 
 	DBGI(DBG_IOCTL, "ioctl code: %s", dbg_vhci_ioctl_code(ioctl_code));
-
-	if (devcom->is_vhub) {
-		DBGW(DBG_IOCTL, "internal ioctl for vhub is not allowed");
-		Irp->IoStatus.Status = STATUS_INVALID_DEVICE_REQUEST;
-		IoCompleteRequest(Irp, IO_NO_INCREMENT);
-		return STATUS_INVALID_DEVICE_REQUEST;
-	}
-
 	vpdo = (pusbip_vpdo_dev_t)devobj->DeviceExtension;
 
 	if (!vpdo->Present) {

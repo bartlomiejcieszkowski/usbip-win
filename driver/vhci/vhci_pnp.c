@@ -688,84 +688,7 @@ complete_pending_irp(pusbip_vpdo_dev_t vpdo)
 	KeReleaseSpinLock(&vpdo->lock_urbr, oldirql);
 }
 
-void vhci_csq_complete_cancelled_irp(PIO_CSQ csq, PIRP irp)
-{
-	irp->IoStatus.Status = STATUS_CANCELLED;
-	irp->IoStatus.Information = 0;
-
-	IoCompleteRequest(irp, IO_NO_INCREMENT);
-}
-
-_Acquires_lock_(CONTAINING_RECORD(csq, usbip_vpdo_dev_t, CancelSafePendingQueue)->PendingQueueLock)
-void vhci_csq_acquire_lock(PIO_CSQ csq, PKIRQL irql)
-{
-	pusbip_vpdo_dev_t vpdo = CONTAINING_RECORD(csq, usbip_vpdo_dev_t, CancelSafePendingQueue);
-	KeAcquireSpinLock(&vpdo->PendingQueueLock, irql);
-}
-
-_Releases_lock_(CONTAINING_RECORD(csq, usbip_vpdo_dev_t, CancelSafePendingQueue)->PendingQueueLock)
-void vhci_csq_release_lock(PIO_CSQ csq, KIRQL irql)
-{
-	pusbip_vpdo_dev_t vpdo = CONTAINING_RECORD(csq, usbip_vpdo_dev_t, CancelSafePendingQueue);
-	KeReleaseSpinLock(&vpdo->PendingQueueLock, irql);
-}
-
-void vhci_csq_insert_irp(PIO_CSQ csq, PIRP irp)
-{
-	pusbip_vpdo_dev_t vpdo = CONTAINING_RECORD(csq, usbip_vpdo_dev_t, CancelSafePendingQueue);
-	InsertTailList(&vpdo->PendingQueue, &irp->Tail.Overlay.ListEntry);
-}
-
-void vhci_csq_remove_irp(PIO_CSQ csq, PIRP irp)
-{
-	UNREFERENCED_PARAMETER(csq);
-	RemoveEntryList(&irp->Tail.Overlay.ListEntry);
-}
-
-PIRP vhci_csq_peek_irp(PIO_CSQ csq, PIRP irp, PVOID peek_context)
-{
-	UNREFERENCED_PARAMETER(peek_context);
-	pusbip_vpdo_dev_t vpdo = CONTAINING_RECORD(csq, usbip_vpdo_dev_t, CancelSafePendingQueue);
-	PLIST_ENTRY next_entry = NULL;
-	PIRP next_irp = NULL;
-	PIO_STACK_LOCATION irp_stack = NULL;
-
-	if (irp == NULL) {
-		next_entry = &vpdo->PendingQueue.Flink;
-	}
-	else {
-		next_entry = irp->Tail.Overlay.ListEntry.Flink;
-	}
-
-	// we explicitly set context to NULL no need for iteration
-	return (next_entry != &vpdo->PendingQueue)
-		? CONTAINING_RECORD(next_entry, IRP, Tail.Overlay.ListEntry)
-		: NULL;
-}
-
-VOID vhci_csq_process_irp_thread(_In_ PVOID ctx)
-{
-	pusbip_vpdo_dev_t vpdo = (pusbip_vpdo_dev_t)ctx;
-	PIRP irp;
-	NTSTATUS status;
-
-	KeSetPriorityThread(KeGetCurrentThread(), LOW_REALTIME_PRIORITY);
-
-	while (TRUE)
-	{
-		KeWaitForSingleObject(&vpdo->PendingQueueThreadSemaphore, Executive, KernelMode, FALSE, NULL);
-		if (vpdo->PendingQueueThreadStop) {
-			PsTerminateSystemThread(STATUS_SUCCESS);
-		}
-
-		irp = IoCsqRemoveNextIrp(&vpdo->CancelSafePendingQueue, NULL);
-		if (irp == NULL) {
-			continue;
-		}
-
-		// process irp here
-	}
-}
+NTSTATUS vhci_internal_ioctl_process(__in PVOID context, __in PIRP Irp);
 
 PAGEABLE void
 vhci_init_vpdo(pusbip_vpdo_dev_t vpdo)
@@ -791,24 +714,8 @@ vhci_init_vpdo(pusbip_vpdo_dev_t vpdo)
 	InitializeListHead(&vpdo->head_urbr_sent);
 	KeInitializeSpinLock(&vpdo->lock_urbr);
 
-	InitializeListHead(&vpdo->PendingQueue);
-	KeInitializeSpinLock(&vpdo->PendingQueueLock);
-	KeInitializeSemaphore(&vpdo->PendingQueueNotEmpty, 0, 1);
-	IoCsqInitialize(&vpdo->CancelSafePendingQueue,
-		vhci_csq_insert_irp,
-		vhci_csq_remove_irp,
-		vhci_csq_peek_irp,
-		vhci_csq_acquire_lock,
-		vhci_csq_release_lock,
-		vhci_csq_complete_cancelled_irp);
-
-	status = PsCreateSystemThread(&vpdo->PendingQueueThread,
-		(ACCESS_MASK)0,
-		NULL,
-		(HANDLE)0,
-		NULL,
-		vhci_csq_irp_process_thread,
-		vpdo);
+	// csq for internal ioctl - those can be at DPC, so we need to queue them for sane PASSIVE_LEVEL processing
+	csq_with_thread_init(&vpdo->irp_internal_csq, vhci_internal_ioctl_process, DEVOBJ_FROM_VPDO(vpdo));
 
 	DEVOBJ_FROM_VPDO(vpdo)->Flags |= DO_POWER_PAGABLE|DO_DIRECT_IO;
 
