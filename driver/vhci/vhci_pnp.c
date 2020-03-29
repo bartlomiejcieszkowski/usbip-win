@@ -169,6 +169,7 @@ destroy_vpdo(pusbip_vpdo_dev_t vpdo)
 	if (vpdo->winstid != NULL)
 		ExFreePoolWithTag(vpdo->winstid, USBIP_VHCI_POOL_TAG);
 
+	threaded_csq_cleanup(&vpdo->irp_internal_csq);
 	// VHCI does not queue any irps at this time so we have nothing to do.
 	// Free any resources.
 
@@ -686,8 +687,6 @@ complete_pending_irp(pusbip_vpdo_dev_t vpdo)
 	InitializeListHead(&vpdo->head_urbr_pending);
 
 	KeReleaseSpinLock(&vpdo->lock_urbr, oldirql);
-
-	threaded_csq_cleanup(&vpdo->irp_internal_csq);
 }
 
 NTSTATUS vhci_internal_ioctl_process(__in PVOID context, __in PIRP Irp);
