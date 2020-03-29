@@ -743,10 +743,35 @@ PIRP vhci_csq_peek_irp(PIO_CSQ csq, PIRP irp, PVOID peek_context)
 		: NULL;
 }
 
+VOID vhci_csq_process_irp_thread(_In_ PVOID ctx)
+{
+	pusbip_vpdo_dev_t vpdo = (pusbip_vpdo_dev_t)ctx;
+	PIRP irp;
+	NTSTATUS status;
+
+	KeSetPriorityThread(KeGetCurrentThread(), LOW_REALTIME_PRIORITY);
+
+	while (TRUE)
+	{
+		KeWaitForSingleObject(&vpdo->PendingQueueThreadSemaphore, Executive, KernelMode, FALSE, NULL);
+		if (vpdo->PendingQueueThreadStop) {
+			PsTerminateSystemThread(STATUS_SUCCESS);
+		}
+
+		irp = IoCsqRemoveNextIrp(&vpdo->CancelSafePendingQueue, NULL);
+		if (irp == NULL) {
+			continue;
+		}
+
+		// process irp here
+	}
+}
+
 PAGEABLE void
 vhci_init_vpdo(pusbip_vpdo_dev_t vpdo)
 {
 	pusbip_vhub_dev_t	vhub;
+	NTSTATUS status;
 
 	PAGED_CODE();
 
@@ -777,7 +802,13 @@ vhci_init_vpdo(pusbip_vpdo_dev_t vpdo)
 		vhci_csq_release_lock,
 		vhci_csq_complete_cancelled_irp);
 
-	
+	status = PsCreateSystemThread(&vpdo->PendingQueueThread,
+		(ACCESS_MASK)0,
+		NULL,
+		(HANDLE)0,
+		NULL,
+		vhci_csq_irp_process_thread,
+		vpdo);
 
 	DEVOBJ_FROM_VPDO(vpdo)->Flags |= DO_POWER_PAGABLE|DO_DIRECT_IO;
 

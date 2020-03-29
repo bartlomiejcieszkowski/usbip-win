@@ -159,14 +159,20 @@ typedef struct
 	// The queue where the incoming requests are held when
 	// the device is stopped for resource rebalance.
 
+	// move this to separte struct
+	HANDLE PendingQueueThread;
+	// Something to wait on, so we avoid busy-wait in thread
+	KSEMAPHORE PendingQueueThreadSemaphore;
+	BOOLEAN PendingQueueThreadStop;
+
 	IO_CSQ CancelSafePendingQueue;
 	LIST_ENTRY PendingQueue;
-	// Something to wait on, so we avoid busy-wait in thread
-	KSEMAPHORE PendingQueueNotEmpty;
+	
 
 	// The spin lock that protects access to  the queue
 
 	KSPIN_LOCK	PendingQueueLock;
+	
 } usbip_vpdo_dev_t, *pusbip_vpdo_dev_t;
 
 void inc_io_vhub(__in pusbip_vhub_dev_t vhub);
