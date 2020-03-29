@@ -123,7 +123,12 @@ process_irp_urb_req(pusbip_vpdo_dev_t vpdo, PIRP irp, PURB urb)
 	case URB_FUNCTION_SELECT_INTERFACE:
 	case URB_FUNCTION_SYNC_RESET_PIPE_AND_CLEAR_STALL:
 	case URB_FUNCTION_CONTROL_TRANSFER_EX:
+#if USING_CSQ_WITH_THREAD
+		threaded_csq_insert_irp(&vpdo->irp_internal_csq, irp);
+		return STATUS_PENDING;
+#else
 		return submit_urbr_irp(vpdo, irp);
+#endif
 	default:
 		DBGW(DBG_IOCTL, "process_irp_urb_req: unhandled function: %s: len: %d",
 			dbg_urbfunc(urb->UrbHeader.Function), urb->UrbHeader.Length);
@@ -142,33 +147,24 @@ setup_topology_address(pusbip_vpdo_dev_t vpdo, PIO_STACK_LOCATION irpStack)
 }
 
 NTSTATUS
-vhci_internal_ioctl(__in PDEVICE_OBJECT devobj, __in PIRP Irp)
+vhci_internal_ioctl_process(__in PVOID context, __in PIRP Irp)
 {
 	LOG_IRQL_NE(PASSIVE_LEVEL);
-	pdev_common_t devcom;
-	pusbip_vpdo_dev_t vpdo;
-	
+	pusbip_vpdo_dev_t vpdo = (pusbip_vpdo_dev_t)context;
+	NTSTATUS status;
 
-	devcom = (pdev_common_t)devobj->DeviceExtension;
-	if (devcom->is_vhub) {
-		DBGW(DBG_IOCTL, "internal ioctl for vhub is not allowed");
-		Irp->IoStatus.Status = STATUS_INVALID_DEVICE_REQUEST;
+	status = submit_urbr_irp(vpdo, Irp);
+	if (status != STATUS_PENDING) {
+		Irp->IoStatus.Information = 0;
+		Irp->IoStatus.Status = status;
 		IoCompleteRequest(Irp, IO_NO_INCREMENT);
-		return STATUS_INVALID_DEVICE_REQUEST;
 	}
-	vpdo = (pusbip_vpdo_dev_t)devobj->DeviceExtension;
-
-	csq_with_thread_insert_irp(&vpdo->irp_internal_csq, Irp);
-
-	// TODO thread with KeWaitForSingleObject
-
-	return STATUS_PENDING;
+	return status;
 }
 
 NTSTATUS
-vhci_internal_ioctl_process(__in PVOID context, __in PIRP Irp)
+vhci_internal_ioctl(__in PDEVICE_OBJECT devobj, __in PIRP Irp)
 {
-	PDEVICE_OBJECT devobj = (PDEVICE_OBJECT)context;
 	PIO_STACK_LOCATION      irpStack;
 	NTSTATUS		status;
 	pusbip_vpdo_dev_t	vpdo;
@@ -176,16 +172,15 @@ vhci_internal_ioctl_process(__in PVOID context, __in PIRP Irp)
 	ULONG			ioctl_code;
 
 	LOG_IRQL_NE(PASSIVE_LEVEL);
-	if (KeGetCurrentIrql() == DISPATCH_LEVEL)
-	{
-		DBGI(DBG_GENERAL | DBG_IOCTL, "vhci_internal_ioctl: TODO queue for DPC level ones");
-		Irp->IoStatus.Information = 0;
+
+	devcom = (pdev_common_t)devobj->DeviceExtension;
+
+	if (devcom->is_vhub) {
+		DBGW(DBG_IOCTL, "internal ioctl for vhub is not allowed");
 		Irp->IoStatus.Status = STATUS_INVALID_DEVICE_REQUEST;
 		IoCompleteRequest(Irp, IO_NO_INCREMENT);
 		return STATUS_INVALID_DEVICE_REQUEST;
 	}
-
-	devcom = (pdev_common_t)devobj->DeviceExtension;
 
 	DBGI(DBG_GENERAL | DBG_IOCTL, "vhci_internal_ioctl: Enter %p", Irp);
 
@@ -211,7 +206,12 @@ vhci_internal_ioctl_process(__in PVOID context, __in PIRP Irp)
 		*(unsigned long *)irpStack->Parameters.Others.Argument1 = USBD_PORT_ENABLED | USBD_PORT_CONNECTED;
 		break;
 	case IOCTL_INTERNAL_USB_RESET_PORT:
+#if USING_CSQ_WITH_THREAD
+		threaded_csq_insert_irp(&vpdo->irp_internal_csq, Irp);
+		status = STATUS_PENDING;
+#else
 		status = submit_urbr_irp(vpdo, Irp);
+#endif
 		break;
 	case IOCTL_INTERNAL_USB_GET_TOPOLOGY_ADDRESS:
 		status = setup_topology_address(vpdo, irpStack);

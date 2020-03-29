@@ -686,6 +686,8 @@ complete_pending_irp(pusbip_vpdo_dev_t vpdo)
 	InitializeListHead(&vpdo->head_urbr_pending);
 
 	KeReleaseSpinLock(&vpdo->lock_urbr, oldirql);
+
+	threaded_csq_cleanup(&vpdo->irp_internal_csq);
 }
 
 NTSTATUS vhci_internal_ioctl_process(__in PVOID context, __in PIRP Irp);
@@ -715,7 +717,7 @@ vhci_init_vpdo(pusbip_vpdo_dev_t vpdo)
 	KeInitializeSpinLock(&vpdo->lock_urbr);
 
 	// csq for internal ioctl - those can be at DPC, so we need to queue them for sane PASSIVE_LEVEL processing
-	csq_with_thread_init(&vpdo->irp_internal_csq, vhci_internal_ioctl_process, DEVOBJ_FROM_VPDO(vpdo));
+	status = threaded_csq_init(&vpdo->irp_internal_csq, vhci_internal_ioctl_process, vpdo); // bad
 
 	DEVOBJ_FROM_VPDO(vpdo)->Flags |= DO_POWER_PAGABLE|DO_DIRECT_IO;
 

@@ -3,7 +3,7 @@
 #include <ntddk.h>
 #include <wmilib.h>	// required for WMILIB_CONTEXT
 
-#include "csq_with_thread.h"
+#include "threaded_csq.h"
 
 #include "vhci_devconf.h"
 
@@ -160,7 +160,7 @@ typedef struct
 	//
 	// The queue where the incoming requests are held when
 	// the device is stopped for resource rebalance.
-	csq_with_thread irp_internal_csq;
+	threaded_csq irp_internal_csq;
 	
 } usbip_vpdo_dev_t, *pusbip_vpdo_dev_t;
 
