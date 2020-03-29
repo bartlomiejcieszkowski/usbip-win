@@ -367,9 +367,9 @@ process_write_irp(pusbip_vpdo_dev_t vpdo, PIRP write_irp)
 			 * so without this it will change IRQL sometimes,
 			 * and introduce to a dead of my userspace program
 			 */
-			//KeRaiseIrql(DISPATCH_LEVEL, &oldirql);
+			KeRaiseIrql(DISPATCH_LEVEL, &oldirql);
 			IoCompleteRequest(irp, IO_NO_INCREMENT);
-			//KeLowerIrql(oldirql);
+			KeLowerIrql(oldirql);
 		}
 	}
 	
